@@ -189,8 +189,10 @@ function MissionCard({
                       )
                     }
                   >
-                    <strong>{option.label}</strong>
-                    <span>{option.description}</span>
+                    <span>
+                      <strong>{option.label}:</strong>{' '}
+                      {option.description}
+                    </span>
                   </button>
                 )
               })}
