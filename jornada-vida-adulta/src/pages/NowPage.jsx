@@ -4,6 +4,7 @@ import EnergyCheckIn from '../components/EnergyCheckIn'
 import FocusMode from '../components/FocusMode'
 import MissionCard from '../components/MissionCard'
 import QuickCapture from '../components/QuickCapture'
+import useLocalStorageState from '../hooks/useLocalStorageState'
 import { recommendMission } from '../utils/missionPrioritizer'
 
 const ENERGY_LABELS = {
@@ -12,30 +13,25 @@ const ENERGY_LABELS = {
   high: 'Alta',
 }
 
-const INITIAL_MISSIONS = [
-  {
-    id: 'mission-ratisqueiro',
-    sourceCaptureId: null,
-    title: 'Finalizar o PDF do Ratisqueiro',
-    nextAction: 'Abrir o PDF e localizar a página de materiais.',
-    status: 'active',
-    priorityType: null,
-    estimatedMinutes: null,
-    energyRequired: null,
-    createdAt: new Date().toISOString(),
-    completedAt: null,
-  },
-]
-
 function NowPage() {
   const [energy, setEnergy] = useState('')
   const [availableMinutes, setAvailableMinutes] = useState(null)
   const [isCheckInConfirmed, setIsCheckInConfirmed] = useState(false)
-  const [captures, setCaptures] = useState([])
-  const [missions, setMissions] = useState(INITIAL_MISSIONS)
+  const [captures, setCaptures] = useLocalStorageState(
+    'jornada:v2:captures',
+    [],
+  )
+  const [missions, setMissions] = useLocalStorageState(
+    'jornada:v2:missions',
+    [],
+  )
   const [activeFocusSession, setActiveFocusSession] =
     useState(null)
-  const [, setFocusSessions] = useState([])
+  const [, setFocusSessions] =
+    useLocalStorageState(
+      'jornada:v2:focus-sessions',
+      [],
+    )
 
   const activeFocusMission = activeFocusSession
     ? missions.find(
