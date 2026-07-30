@@ -64,6 +64,23 @@ function FocusHistory({ sessions, missions }) {
               {session.source === 'rescue' && (
                 <p>Iniciada pelo Modo Resgate.</p>
               )}
+
+              {session.parkedThoughts?.length > 0 && (
+                <details>
+                  <summary>
+                    {session.parkedThoughts.length}{' '}
+                    pensamento(s) estacionado(s)
+                  </summary>
+
+                  <ul>
+                    {session.parkedThoughts.map((thought) => (
+                      <li key={thought.id}>
+                        {thought.text}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
             </article>
           </li>
         ))}

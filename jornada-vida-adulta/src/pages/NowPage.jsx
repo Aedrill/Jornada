@@ -181,6 +181,7 @@ function NowPage() {
   function handleExitFocus({
     continuationNote,
     outcome,
+    parkedThoughts,
   }) {
     if (!activeFocusSession) {
       return
@@ -207,6 +208,7 @@ function NowPage() {
         ...activeFocusSession,
         outcome,
         continuationNote,
+        parkedThoughts,
         endedAt,
         actualSeconds,
         actualMinutes,

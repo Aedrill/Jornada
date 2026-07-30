@@ -1,17 +1,39 @@
 import { useState } from 'react'
 import FocusTimer from './FocusTimer'
+import ThoughtParkingLot from './ThoughtParkingLot'
 
 function FocusMode({ mission, plannedMinutes, onExit }) {
   const [continuationNote, setContinuationNote] = useState(
     mission.continuationNote ?? '',
   )
   const [sessionOutcome, setSessionOutcome] = useState('paused')
+  const [parkedThoughts, setParkedThoughts] = useState([])
 
   function handleExit() {
     onExit({
       continuationNote: continuationNote.trim(),
       outcome: sessionOutcome,
+      parkedThoughts,
     })
+  }
+
+  function handleAddThought(text) {
+    setParkedThoughts((currentThoughts) => [
+      ...currentThoughts,
+      {
+        id: crypto.randomUUID(),
+        text,
+        createdAt: new Date().toISOString(),
+      },
+    ])
+  }
+
+  function handleRemoveThought(thoughtId) {
+    setParkedThoughts((currentThoughts) =>
+      currentThoughts.filter(
+        (thought) => thought.id !== thoughtId,
+      ),
+    )
   }
 
   return (
@@ -29,6 +51,12 @@ function FocusMode({ mission, plannedMinutes, onExit }) {
       </section>
 
       <FocusTimer plannedMinutes={plannedMinutes} />
+
+      <ThoughtParkingLot
+        thoughts={parkedThoughts}
+        onAddThought={handleAddThought}
+        onRemoveThought={handleRemoveThought}
+      />
 
       <fieldset>
         <legend>Como terminou este bloco?</legend>
