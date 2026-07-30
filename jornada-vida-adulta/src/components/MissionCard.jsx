@@ -39,12 +39,20 @@ function MissionCard({
   onSaveEnergyRequired,
   onSavePriorityType,
   onDeleteMission,
+  onStartFocus,
 }) {
   const [nextActionDraft, setNextActionDraft] = useState(
     mission.nextAction,
   )
   const [isConfirmingDelete, setIsConfirmingDelete] =
     useState(false)
+
+  const canStartFocus = Boolean(
+    mission.status === 'active' &&
+      mission.nextAction &&
+      mission.estimatedMinutes &&
+      mission.energyRequired,
+  )
 
   function handleSubmit(event) {
     event.preventDefault()
@@ -186,6 +194,17 @@ function MissionCard({
             </div>
           </fieldset>
         </>
+      )}
+
+      {canStartFocus && (
+        <section aria-label="Iniciar missão">
+          <button
+            type="button"
+            onClick={() => onStartFocus(mission)}
+          >
+            Começar por 5 minutos
+          </button>
+        </section>
       )}
 
       <section aria-label="Ações da missão">

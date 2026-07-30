@@ -483,6 +483,7 @@ function NowPage() {
                   onSaveEnergyRequired={handleSaveEnergyRequired}
                   onSavePriorityType={handleSavePriorityType}
                   onDeleteMission={handleDeleteMission}
+                  onStartFocus={handleStartFocus}
                 />
               </li>
             ))}
