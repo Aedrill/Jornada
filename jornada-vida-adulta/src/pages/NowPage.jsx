@@ -186,6 +186,19 @@ function NowPage() {
     }
 
     const endedAt = new Date().toISOString()
+    const startedAtMilliseconds = new Date(
+      activeFocusSession.startedAt,
+    ).getTime()
+    const endedAtMilliseconds = new Date(endedAt).getTime()
+    const actualSeconds = Math.max(
+      0,
+      Math.round(
+        (endedAtMilliseconds - startedAtMilliseconds) / 1000,
+      ),
+    )
+    const actualMinutes = Number(
+      (actualSeconds / 60).toFixed(1),
+    )
     const completedMission = outcome === 'completed'
 
     setFocusSessions((currentSessions) => [
@@ -194,6 +207,8 @@ function NowPage() {
         outcome,
         continuationNote,
         endedAt,
+        actualSeconds,
+        actualMinutes,
       },
       ...currentSessions,
     ])
