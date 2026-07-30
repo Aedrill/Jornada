@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import AvailableTimeCheckIn from '../components/AvailableTimeCheckIn'
 import EnergyCheckIn from '../components/EnergyCheckIn'
+import FocusHistory from '../components/FocusHistory'
 import FocusMode from '../components/FocusMode'
 import MissionCard from '../components/MissionCard'
 import QuickCapture from '../components/QuickCapture'
@@ -30,7 +31,7 @@ function NowPage() {
     useState(null)
   const [rescueMissionId, setRescueMissionId] =
     useState(null)
-  const [, setFocusSessions] =
+  const [focusSessions, setFocusSessions] =
     useLocalStorageState(
       'jornada:v2:focus-sessions',
       [],
@@ -396,6 +397,11 @@ function NowPage() {
           </ul>
         </section>
       )}
+
+      <FocusHistory
+        sessions={focusSessions}
+        missions={missions}
+      />
     </main>
   )
 }
