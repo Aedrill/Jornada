@@ -291,46 +291,48 @@ function NowPage() {
           </section>
 
           <QuickCapture onCapture={handleCapture} />
-
-          {captures.length > 0 && (
-            <section aria-labelledby="captures-title">
-              <h2 id="captures-title">Caixa de entrada</h2>
-
-              <ul>
-                {captures.map((capture) => (
-                  <li key={capture.id}>
-                    <span>{capture.text}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleConvertCaptureToMission(capture.id)}
-                    >
-                      Transformar em missão
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {missions.length > 0 && (
-            <section aria-labelledby="missions-title">
-              <h2 id="missions-title">Missões</h2>
-
-              <ul>
-                {missions.map((mission) => (
-                  <li key={mission.id}>
-                    <MissionCard
-                      mission={mission}
-                      onSaveNextAction={handleSaveNextAction}
-                      onSaveEstimatedMinutes={handleSaveEstimatedMinutes}
-                      onSaveEnergyRequired={handleSaveEnergyRequired}
-                    />
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
         </>
+      )}
+
+      {captures.length > 0 && (
+        <section aria-labelledby="captures-title">
+          <h2 id="captures-title">Caixa de entrada</h2>
+
+          <ul>
+            {captures.map((capture) => (
+              <li key={capture.id}>
+                <span>{capture.text}</span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleConvertCaptureToMission(capture.id)
+                  }
+                >
+                  Transformar em missão
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {missions.length > 0 && (
+        <section aria-labelledby="missions-title">
+          <h2 id="missions-title">Missões</h2>
+
+          <ul>
+            {missions.map((mission) => (
+              <li key={mission.id}>
+                <MissionCard
+                  mission={mission}
+                  onSaveNextAction={handleSaveNextAction}
+                  onSaveEstimatedMinutes={handleSaveEstimatedMinutes}
+                  onSaveEnergyRequired={handleSaveEnergyRequired}
+                />
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </main>
   )
