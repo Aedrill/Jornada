@@ -4,6 +4,7 @@ import EnergyCheckIn from '../components/EnergyCheckIn'
 import FocusMode from '../components/FocusMode'
 import MissionCard from '../components/MissionCard'
 import QuickCapture from '../components/QuickCapture'
+import RescueMode from '../components/RescueMode'
 import useLocalStorageState from '../hooks/useLocalStorageState'
 import { recommendMission } from '../utils/missionPrioritizer'
 
@@ -27,6 +28,8 @@ function NowPage() {
   )
   const [activeFocusSession, setActiveFocusSession] =
     useState(null)
+  const [rescueMissionId, setRescueMissionId] =
+    useState(null)
   const [, setFocusSessions] =
     useLocalStorageState(
       'jornada:v2:focus-sessions',
@@ -37,6 +40,12 @@ function NowPage() {
     ? missions.find(
         (mission) =>
           mission.id === activeFocusSession.missionId,
+      )
+    : null
+
+  const rescueMission = rescueMissionId
+    ? missions.find(
+        (mission) => mission.id === rescueMissionId,
       )
     : null
 
@@ -210,6 +219,17 @@ function NowPage() {
     setActiveFocusSession(null)
   }
 
+  if (rescueMission) {
+    return (
+      <main className="now-checkin-page">
+        <RescueMode
+          mission={rescueMission}
+          onClose={() => setRescueMissionId(null)}
+        />
+      </main>
+    )
+  }
+
   if (activeFocusSession && activeFocusMission) {
     return (
       <FocusMode
@@ -280,6 +300,15 @@ function NowPage() {
                   }
                 >
                   Começar por 5 minutos
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setRescueMissionId(recommendedMission.id)
+                  }
+                >
+                  Não consigo começar
                 </button>
               </article>
             ) : (
