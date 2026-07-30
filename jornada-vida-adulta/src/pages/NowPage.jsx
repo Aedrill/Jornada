@@ -1,4 +1,8 @@
-import { useEffect, useState } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 import AvailableTimeCheckIn from '../components/AvailableTimeCheckIn'
 import DailyMissionBoard from '../components/DailyMissionBoard'
 import EnergyCheckIn from '../components/EnergyCheckIn'
@@ -21,6 +25,12 @@ const EMPTY_DAILY_SELECTIONS = {
   main: null,
   maintenance: null,
   care: null,
+}
+
+const DAILY_ROLE_LABELS = {
+  main: 'Principal',
+  maintenance: 'Manutenção',
+  care: 'Cuidado',
 }
 
 function createDailyPlan(dateKey) {
@@ -57,6 +67,11 @@ function NowPage() {
   const [isCheckInConfirmed, setIsCheckInConfirmed] = useState(false)
   const [isMissionListOpen, setIsMissionListOpen] =
     useState(false)
+  const [
+    missionListRoleFilter,
+    setMissionListRoleFilter,
+  ] = useState(null)
+  const missionListSectionRef = useRef(null)
   const [captures, setCaptures] = useLocalStorageState(
     'jornada:v2:captures',
     [],
@@ -93,6 +108,23 @@ function NowPage() {
     })
   }, [setDailyPlan, todayKey])
 
+  useEffect(() => {
+    if (
+      !isMissionListOpen ||
+      !missionListRoleFilter
+    ) {
+      return
+    }
+
+    missionListSectionRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    })
+  }, [
+    isMissionListOpen,
+    missionListRoleFilter,
+  ])
+
   const activeFocusMission = activeFocusSession
     ? missions.find(
         (mission) =>
@@ -111,6 +143,15 @@ function NowPage() {
     availableMinutes,
     energy,
   )
+
+  const visibleMissions = missionListRoleFilter
+    ? missions.filter(
+        (mission) =>
+          mission.status === 'active' &&
+          mission.priorityType ===
+            missionListRoleFilter,
+      )
+    : missions
 
   const canConfirmCheckIn =
     Boolean(energy) && availableMinutes !== null
@@ -373,6 +414,11 @@ function NowPage() {
     }))
   }
 
+  function handleOpenMissionListForRole(role) {
+    setMissionListRoleFilter(role)
+    setIsMissionListOpen(true)
+  }
+
   function handleDeleteMission(missionId) {
     setMissions((currentMissions) =>
       currentMissions.filter(
@@ -541,6 +587,9 @@ function NowPage() {
               EMPTY_DAILY_SELECTIONS
             }
             onStartFocus={handleStartFocus}
+            onChooseMission={
+              handleOpenMissionListForRole
+            }
           />
 
           <section aria-labelledby="recommendation-title">
@@ -618,16 +667,27 @@ function NowPage() {
       )}
 
       {missions.length > 0 && (
-        <section aria-labelledby="missions-title">
+        <section
+          ref={missionListSectionRef}
+          aria-labelledby="missions-title"
+        >
           <button
             type="button"
             aria-expanded={isMissionListOpen}
             aria-controls="mission-list-content"
-            onClick={() =>
+            onClick={() => {
               setIsMissionListOpen(
-                (currentValue) => !currentValue,
+                (currentValue) => {
+                  const nextValue = !currentValue
+
+                  if (!nextValue) {
+                    setMissionListRoleFilter(null)
+                  }
+
+                  return nextValue
+                },
               )
-            }
+            }}
           >
             {isMissionListOpen
               ? 'Ocultar todas as missões'
@@ -638,8 +698,38 @@ function NowPage() {
             <div id="mission-list-content">
               <h2 id="missions-title">Todas as missões</h2>
 
+              {missionListRoleFilter && (
+                <div role="status">
+                  <p>
+                    Mostrando missões de{' '}
+                    <strong>
+                      {
+                        DAILY_ROLE_LABELS[
+                          missionListRoleFilter
+                        ]
+                      }
+                    </strong>
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setMissionListRoleFilter(null)
+                    }
+                  >
+                    Mostrar todas
+                  </button>
+                </div>
+              )}
+
+              {visibleMissions.length === 0 && (
+                <p>
+                  Nenhuma missão disponível para este papel.
+                </p>
+              )}
+
               <ul>
-                {missions.map((mission) => (
+                {visibleMissions.map((mission) => (
                   <li key={mission.id}>
                     <MissionCard
                       mission={mission}

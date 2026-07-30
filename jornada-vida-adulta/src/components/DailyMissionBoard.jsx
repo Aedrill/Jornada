@@ -20,6 +20,7 @@ function DailyMissionBoard({
   missions,
   selectedMissionIds,
   onStartFocus,
+  onChooseMission,
 }) {
   function findMissionByRole(role) {
     const selectedMissionId = selectedMissionIds?.[role]
@@ -77,9 +78,29 @@ function DailyMissionBoard({
                       </button>
                     )
                   )}
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onChooseMission(role.value)
+                    }
+                  >
+                    Trocar missão
+                  </button>
                 </>
               ) : (
-                <p>{role.emptyMessage}</p>
+                <>
+                  <p>{role.emptyMessage}</p>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onChooseMission(role.value)
+                    }
+                  >
+                    Escolher {role.label.toLowerCase()}
+                  </button>
+                </>
               )}
             </article>
           )
