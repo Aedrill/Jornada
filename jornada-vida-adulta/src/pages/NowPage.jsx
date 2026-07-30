@@ -321,6 +321,31 @@ function NowPage() {
     })
   }
 
+  function handleRemoveMissionFromToday(missionId) {
+    setDailyPlan((currentPlan) => {
+      const currentSelections = {
+        ...EMPTY_DAILY_SELECTIONS,
+        ...currentPlan?.selections,
+      }
+
+      const updatedSelections = Object.fromEntries(
+        Object.entries(currentSelections).map(
+          ([role, selectedMissionId]) => [
+            role,
+            selectedMissionId === missionId
+              ? null
+              : selectedMissionId,
+          ],
+        ),
+      )
+
+      return {
+        dateKey: todayKey,
+        selections: updatedSelections,
+      }
+    })
+  }
+
   function handleDeleteMission(missionId) {
     setMissions((currentMissions) =>
       currentMissions.filter(
@@ -582,6 +607,9 @@ function NowPage() {
                   onStartFocus={handleStartFocus}
                   onSelectForToday={
                     handleSelectMissionForToday
+                  }
+                  onRemoveFromToday={
+                    handleRemoveMissionFromToday
                   }
                   isSelectedForToday={Boolean(
                     mission.priorityType &&
