@@ -599,19 +599,18 @@ function NowPage() {
             <p>Tempo disponível: {availableMinutes} minutos</p>
           </section>
 
-          <div ref={dailyMissionBoardRef}>
-            <DailyMissionBoard
-              missions={missions}
-              selectedMissionIds={
-                dailyPlan?.selections ??
-                EMPTY_DAILY_SELECTIONS
-              }
-              onStartFocus={handleStartFocus}
-              onChooseMission={
-                handleOpenMissionListForRole
-              }
-            />
-          </div>
+          <DailyMissionBoard
+            boardRef={dailyMissionBoardRef}
+            missions={missions}
+            selectedMissionIds={
+              dailyPlan?.selections ??
+              EMPTY_DAILY_SELECTIONS
+            }
+            onStartFocus={handleStartFocus}
+            onChooseMission={
+              handleOpenMissionListForRole
+            }
+          />
 
           <section aria-labelledby="recommendation-title">
             <h2 id="recommendation-title">Missão recomendada</h2>

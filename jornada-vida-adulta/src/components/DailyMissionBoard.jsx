@@ -21,6 +21,7 @@ function DailyMissionBoard({
   selectedMissionIds,
   onStartFocus,
   onChooseMission,
+  boardRef,
 }) {
   function findMissionByRole(role) {
     const selectedMissionId = selectedMissionIds?.[role]
@@ -38,7 +39,10 @@ function DailyMissionBoard({
   }
 
   return (
-    <section aria-labelledby="daily-missions-title">
+    <section
+      ref={boardRef}
+      aria-labelledby="daily-missions-title"
+    >
       <h2 id="daily-missions-title">Suas três missões</h2>
 
       <div>
