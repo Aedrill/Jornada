@@ -249,6 +249,14 @@ function NowPage() {
     )
   }
 
+  function handleDeleteMission(missionId) {
+    setMissions((currentMissions) =>
+      currentMissions.filter(
+        (mission) => mission.id !== missionId,
+      ),
+    )
+  }
+
   function handleStartFocus(mission) {
     setActiveFocusSession({
       id: crypto.randomUUID(),
@@ -474,6 +482,7 @@ function NowPage() {
                   onSaveEstimatedMinutes={handleSaveEstimatedMinutes}
                   onSaveEnergyRequired={handleSaveEnergyRequired}
                   onSavePriorityType={handleSavePriorityType}
+                  onDeleteMission={handleDeleteMission}
                 />
               </li>
             ))}

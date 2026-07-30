@@ -38,10 +38,13 @@ function MissionCard({
   onSaveEstimatedMinutes,
   onSaveEnergyRequired,
   onSavePriorityType,
+  onDeleteMission,
 }) {
   const [nextActionDraft, setNextActionDraft] = useState(
     mission.nextAction,
   )
+  const [isConfirmingDelete, setIsConfirmingDelete] =
+    useState(false)
 
   function handleSubmit(event) {
     event.preventDefault()
@@ -184,6 +187,35 @@ function MissionCard({
           </fieldset>
         </>
       )}
+
+      <section aria-label="Ações da missão">
+        {!isConfirmingDelete ? (
+          <button
+            type="button"
+            onClick={() => setIsConfirmingDelete(true)}
+          >
+            Excluir missão
+          </button>
+        ) : (
+          <div role="alert">
+            <p>Excluir esta missão permanentemente?</p>
+
+            <button
+              type="button"
+              onClick={() => onDeleteMission(mission.id)}
+            >
+              Sim, excluir
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsConfirmingDelete(false)}
+            >
+              Cancelar
+            </button>
+          </div>
+        )}
+      </section>
     </article>
   )
 }
