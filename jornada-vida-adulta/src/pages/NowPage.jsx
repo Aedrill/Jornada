@@ -32,6 +32,23 @@ function createDailyPlan(dateKey) {
   }
 }
 
+function removeMissionFromSelections(
+  selections,
+  missionId,
+) {
+  return Object.fromEntries(
+    Object.entries({
+      ...EMPTY_DAILY_SELECTIONS,
+      ...selections,
+    }).map(([role, selectedMissionId]) => [
+      role,
+      selectedMissionId === missionId
+        ? null
+        : selectedMissionId,
+    ]),
+  )
+}
+
 function NowPage() {
   const todayKey = getLocalDateKey()
 
@@ -273,6 +290,17 @@ function NowPage() {
     missionId,
     priorityType,
   ) {
+    const currentMission = missions.find(
+      (mission) => mission.id === missionId,
+    )
+
+    if (!currentMission) {
+      return
+    }
+
+    const roleChanged =
+      currentMission.priorityType !== priorityType
+
     setMissions((currentMissions) =>
       currentMissions.map((mission) =>
         mission.id === missionId
@@ -281,9 +309,21 @@ function NowPage() {
               priorityType,
               updatedAt: new Date().toISOString(),
             }
-          : mission,
+        : mission,
       ),
     )
+
+    if (!roleChanged) {
+      return
+    }
+
+    setDailyPlan((currentPlan) => ({
+      dateKey: todayKey,
+      selections: removeMissionFromSelections(
+        currentPlan?.selections,
+        missionId,
+      ),
+    }))
   }
 
   function handleSelectMissionForToday(mission) {
@@ -322,28 +362,13 @@ function NowPage() {
   }
 
   function handleRemoveMissionFromToday(missionId) {
-    setDailyPlan((currentPlan) => {
-      const currentSelections = {
-        ...EMPTY_DAILY_SELECTIONS,
-        ...currentPlan?.selections,
-      }
-
-      const updatedSelections = Object.fromEntries(
-        Object.entries(currentSelections).map(
-          ([role, selectedMissionId]) => [
-            role,
-            selectedMissionId === missionId
-              ? null
-              : selectedMissionId,
-          ],
-        ),
-      )
-
-      return {
-        dateKey: todayKey,
-        selections: updatedSelections,
-      }
-    })
+    setDailyPlan((currentPlan) => ({
+      dateKey: todayKey,
+      selections: removeMissionFromSelections(
+        currentPlan?.selections,
+        missionId,
+      ),
+    }))
   }
 
   function handleDeleteMission(missionId) {
