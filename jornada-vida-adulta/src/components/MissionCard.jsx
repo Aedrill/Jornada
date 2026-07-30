@@ -8,11 +8,36 @@ const ENERGY_REQUIREMENT_OPTIONS = [
   { value: 'high', label: 'Alta' },
 ]
 
+const PRIORITY_TYPE_OPTIONS = [
+  {
+    value: 'main',
+    label: 'Principal',
+    description: 'Produz avanço real.',
+  },
+  {
+    value: 'maintenance',
+    label: 'Manutenção',
+    description: 'Evita problemas ou acúmulos.',
+  },
+  {
+    value: 'care',
+    label: 'Cuidado',
+    description: 'Protege sua saúde e energia.',
+  },
+]
+
+const PRIORITY_TYPE_LABELS = {
+  main: 'Principal',
+  maintenance: 'Manutenção',
+  care: 'Cuidado',
+}
+
 function MissionCard({
   mission,
   onSaveNextAction,
   onSaveEstimatedMinutes,
   onSaveEnergyRequired,
+  onSavePriorityType,
 }) {
   const [nextActionDraft, setNextActionDraft] = useState(
     mission.nextAction,
@@ -33,6 +58,13 @@ function MissionCard({
   return (
     <article>
       <h3>{mission.title}</h3>
+
+      {mission.priorityType && (
+        <p>
+          <strong>Papel:</strong>{' '}
+          {PRIORITY_TYPE_LABELS[mission.priorityType]}
+        </p>
+      )}
 
       {mission.status === 'completed' && (
         <p role="status">Missão concluída.</p>
@@ -117,6 +149,34 @@ function MissionCard({
                     }
                   >
                     {option.label}
+                  </button>
+                )
+              })}
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Qual é o papel desta missão?</legend>
+
+            <div>
+              {PRIORITY_TYPE_OPTIONS.map((option) => {
+                const isSelected =
+                  mission.priorityType === option.value
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    aria-pressed={isSelected}
+                    onClick={() =>
+                      onSavePriorityType(
+                        mission.id,
+                        option.value,
+                      )
+                    }
+                  >
+                    <strong>{option.label}</strong>
+                    <span>{option.description}</span>
                   </button>
                 )
               })}

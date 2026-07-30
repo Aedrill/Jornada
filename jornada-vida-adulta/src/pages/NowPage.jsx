@@ -232,6 +232,23 @@ function NowPage() {
     )
   }
 
+  function handleSavePriorityType(
+    missionId,
+    priorityType,
+  ) {
+    setMissions((currentMissions) =>
+      currentMissions.map((mission) =>
+        mission.id === missionId
+          ? {
+              ...mission,
+              priorityType,
+              updatedAt: new Date().toISOString(),
+            }
+          : mission,
+      ),
+    )
+  }
+
   function handleStartFocus(mission) {
     setActiveFocusSession({
       id: crypto.randomUUID(),
@@ -456,6 +473,7 @@ function NowPage() {
                   onSaveNextAction={handleSaveNextAction}
                   onSaveEstimatedMinutes={handleSaveEstimatedMinutes}
                   onSaveEnergyRequired={handleSaveEnergyRequired}
+                  onSavePriorityType={handleSavePriorityType}
                 />
               </li>
             ))}
