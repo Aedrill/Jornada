@@ -128,6 +128,23 @@ function NowPage() {
     )
   }
 
+  function handleSaveEnergyRequired(
+    missionId,
+    energyRequired,
+  ) {
+    setMissions((currentMissions) =>
+      currentMissions.map((mission) =>
+        mission.id === missionId
+          ? {
+              ...mission,
+              energyRequired,
+              updatedAt: new Date().toISOString(),
+            }
+          : mission,
+      ),
+    )
+  }
+
   return (
     <main className="now-checkin-page">
       <h1>Agora</h1>
@@ -192,6 +209,7 @@ function NowPage() {
                       mission={mission}
                       onSaveNextAction={handleSaveNextAction}
                       onSaveEstimatedMinutes={handleSaveEstimatedMinutes}
+                      onSaveEnergyRequired={handleSaveEnergyRequired}
                     />
                   </li>
                 ))}

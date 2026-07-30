@@ -2,7 +2,18 @@ import { useState } from 'react'
 
 const DURATION_OPTIONS = [5, 15, 30, 60]
 
-function MissionCard({ mission, onSaveNextAction, onSaveEstimatedMinutes }) {
+const ENERGY_REQUIREMENT_OPTIONS = [
+  { value: 'low', label: 'Baixa' },
+  { value: 'medium', label: 'Média' },
+  { value: 'high', label: 'Alta' },
+]
+
+function MissionCard({
+  mission,
+  onSaveNextAction,
+  onSaveEstimatedMinutes,
+  onSaveEnergyRequired,
+}) {
   const [nextActionDraft, setNextActionDraft] = useState(
     mission.nextAction,
   )
@@ -68,6 +79,28 @@ function MissionCard({ mission, onSaveNextAction, onSaveEstimatedMinutes }) {
               {minutes} min
             </button>
           ))}
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Quanta energia esta missão exige?</legend>
+        <div>
+          {ENERGY_REQUIREMENT_OPTIONS.map((option) => {
+            const isSelected = mission.energyRequired === option.value
+
+            return (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={isSelected}
+                onClick={() =>
+                  onSaveEnergyRequired(mission.id, option.value)
+                }
+              >
+                {option.label}
+              </button>
+            )
+          })}
         </div>
       </fieldset>
     </article>
