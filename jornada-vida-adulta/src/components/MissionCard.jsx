@@ -40,6 +40,8 @@ function MissionCard({
   onSavePriorityType,
   onDeleteMission,
   onStartFocus,
+  onSelectForToday,
+  isSelectedForToday,
 }) {
   const [nextActionDraft, setNextActionDraft] = useState(
     mission.nextAction,
@@ -195,6 +197,21 @@ function MissionCard({
           </fieldset>
         </>
       )}
+
+      {mission.status === 'active' &&
+        mission.priorityType && (
+          <section aria-label="Planejamento diário">
+            <button
+              type="button"
+              disabled={isSelectedForToday}
+              onClick={() => onSelectForToday(mission)}
+            >
+              {isSelectedForToday
+                ? 'No painel de hoje'
+                : 'Escolher para hoje'}
+            </button>
+          </section>
+        )}
 
       {canStartFocus && (
         <section aria-label="Iniciar missão">

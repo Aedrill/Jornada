@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import AvailableTimeCheckIn from '../components/AvailableTimeCheckIn'
 import DailyMissionBoard from '../components/DailyMissionBoard'
 import EnergyCheckIn from '../components/EnergyCheckIn'
@@ -8,6 +8,7 @@ import MissionCard from '../components/MissionCard'
 import QuickCapture from '../components/QuickCapture'
 import RescueMode from '../components/RescueMode'
 import useLocalStorageState from '../hooks/useLocalStorageState'
+import { getLocalDateKey } from '../utils/dateKey'
 import { recommendMission } from '../utils/missionPrioritizer'
 
 const ENERGY_LABELS = {
@@ -16,7 +17,24 @@ const ENERGY_LABELS = {
   high: 'Alta',
 }
 
+const EMPTY_DAILY_SELECTIONS = {
+  main: null,
+  maintenance: null,
+  care: null,
+}
+
+function createDailyPlan(dateKey) {
+  return {
+    dateKey,
+    selections: {
+      ...EMPTY_DAILY_SELECTIONS,
+    },
+  }
+}
+
 function NowPage() {
+  const todayKey = getLocalDateKey()
+
   const [energy, setEnergy] = useState('')
   const [availableMinutes, setAvailableMinutes] = useState(null)
   const [isCheckInConfirmed, setIsCheckInConfirmed] = useState(false)
@@ -37,6 +55,24 @@ function NowPage() {
       'jornada:v2:focus-sessions',
       [],
     )
+  const [dailyPlan, setDailyPlan] =
+    useLocalStorageState(
+      'jornada:v2:daily-plan',
+      createDailyPlan(todayKey),
+    )
+
+  useEffect(() => {
+    setDailyPlan((currentPlan) => {
+      if (
+        currentPlan?.dateKey === todayKey &&
+        currentPlan?.selections
+      ) {
+        return currentPlan
+      }
+
+      return createDailyPlan(todayKey)
+    })
+  }, [setDailyPlan, todayKey])
 
   const activeFocusMission = activeFocusSession
     ? missions.find(
@@ -250,12 +286,62 @@ function NowPage() {
     )
   }
 
+  function handleSelectMissionForToday(mission) {
+    const validRoles = [
+      'main',
+      'maintenance',
+      'care',
+    ]
+
+    if (
+      mission.status !== 'active' ||
+      !validRoles.includes(mission.priorityType)
+    ) {
+      return
+    }
+
+    setDailyPlan((currentPlan) => {
+      const currentSelections =
+        currentPlan?.dateKey === todayKey
+          ? {
+              ...EMPTY_DAILY_SELECTIONS,
+              ...currentPlan.selections,
+            }
+          : {
+              ...EMPTY_DAILY_SELECTIONS,
+            }
+
+      return {
+        dateKey: todayKey,
+        selections: {
+          ...currentSelections,
+          [mission.priorityType]: mission.id,
+        },
+      }
+    })
+  }
+
   function handleDeleteMission(missionId) {
     setMissions((currentMissions) =>
       currentMissions.filter(
         (mission) => mission.id !== missionId,
       ),
     )
+
+    setDailyPlan((currentPlan) => ({
+      ...currentPlan,
+      selections: Object.fromEntries(
+        Object.entries(
+          currentPlan.selections ??
+            EMPTY_DAILY_SELECTIONS,
+        ).map(([role, selectedMissionId]) => [
+          role,
+          selectedMissionId === missionId
+            ? null
+            : selectedMissionId,
+        ]),
+      ),
+    }))
   }
 
   function handleStartFocus(mission) {
@@ -398,6 +484,10 @@ function NowPage() {
 
           <DailyMissionBoard
             missions={missions}
+            selectedMissionIds={
+              dailyPlan?.selections ??
+              EMPTY_DAILY_SELECTIONS
+            }
             onStartFocus={handleStartFocus}
           />
 
@@ -490,6 +580,15 @@ function NowPage() {
                   onSavePriorityType={handleSavePriorityType}
                   onDeleteMission={handleDeleteMission}
                   onStartFocus={handleStartFocus}
+                  onSelectForToday={
+                    handleSelectMissionForToday
+                  }
+                  isSelectedForToday={Boolean(
+                    mission.priorityType &&
+                      dailyPlan?.selections?.[
+                        mission.priorityType
+                      ] === mission.id,
+                  )}
                 />
               </li>
             ))}

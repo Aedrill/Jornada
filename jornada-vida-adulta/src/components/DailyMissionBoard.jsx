@@ -18,20 +18,22 @@ const DAILY_ROLES = [
 
 function DailyMissionBoard({
   missions,
+  selectedMissionIds,
   onStartFocus,
 }) {
   function findMissionByRole(role) {
-    return missions
-      .filter(
+    const selectedMissionId = selectedMissionIds?.[role]
+
+    if (!selectedMissionId) {
+      return null
+    }
+
+    return (
+      missions.find(
         (mission) =>
-          mission.status === 'active' &&
-          mission.priorityType === role,
-      )
-      .sort(
-        (firstMission, secondMission) =>
-          new Date(firstMission.createdAt).getTime() -
-          new Date(secondMission.createdAt).getTime(),
-      )[0] ?? null
+          mission.id === selectedMissionId,
+      ) ?? null
+    )
   }
 
   return (
@@ -63,13 +65,17 @@ function DailyMissionBoard({
                       'Próxima ação ainda não definida.'}
                   </p>
 
-                  {isReady && (
-                    <button
-                      type="button"
-                      onClick={() => onStartFocus(mission)}
-                    >
-                      Começar por 5 minutos
-                    </button>
+                  {mission.status === 'completed' ? (
+                    <p role="status">Missão concluída.</p>
+                  ) : (
+                    isReady && (
+                      <button
+                        type="button"
+                        onClick={() => onStartFocus(mission)}
+                      >
+                        Começar por 5 minutos
+                      </button>
+                    )
                   )}
                 </>
               ) : (
