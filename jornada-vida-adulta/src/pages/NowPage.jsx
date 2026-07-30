@@ -456,6 +456,23 @@ function NowPage() {
     )
   }
 
+  function handleReopenMission(missionId) {
+    const reopenedAt = new Date().toISOString()
+
+    setMissions((currentMissions) =>
+      currentMissions.map((mission) =>
+        mission.id === missionId
+          ? {
+              ...mission,
+              status: 'active',
+              completedAt: null,
+              updatedAt: reopenedAt,
+            }
+          : mission,
+      ),
+    )
+  }
+
   function handleDeleteMission(missionId) {
     setMissions((currentMissions) =>
       currentMissions.filter(
@@ -629,6 +646,7 @@ function NowPage() {
               handleOpenMissionListForRole
             }
             onCompleteMission={handleCompleteMission}
+            onReopenMission={handleReopenMission}
           />
 
           <section aria-labelledby="recommendation-title">
