@@ -166,7 +166,7 @@ function NowPage() {
     setActiveFocusSession({
       id: crypto.randomUUID(),
       missionId: mission.id,
-      plannedMinutes: 5,
+      plannedMinutes: 0.05,
       startedAt: new Date().toISOString(),
     })
   }
