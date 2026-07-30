@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import AvailableTimeCheckIn from '../components/AvailableTimeCheckIn'
 import EnergyCheckIn from '../components/EnergyCheckIn'
+import MissionCard from '../components/MissionCard'
 import QuickCapture from '../components/QuickCapture'
 
 const ENERGY_LABELS = {
@@ -9,12 +10,27 @@ const ENERGY_LABELS = {
   high: 'Alta',
 }
 
+const INITIAL_MISSIONS = [
+  {
+    id: 'mission-ratisqueiro',
+    sourceCaptureId: null,
+    title: 'Finalizar o PDF do Ratisqueiro',
+    nextAction: 'Abrir o PDF e localizar a página de materiais.',
+    status: 'active',
+    priorityType: null,
+    estimatedMinutes: null,
+    energyRequired: null,
+    createdAt: new Date().toISOString(),
+    completedAt: null,
+  },
+]
+
 function NowPage() {
   const [energy, setEnergy] = useState('')
   const [availableMinutes, setAvailableMinutes] = useState(null)
   const [isCheckInConfirmed, setIsCheckInConfirmed] = useState(false)
   const [captures, setCaptures] = useState([])
-  const [missions, setMissions] = useState([])
+  const [missions, setMissions] = useState(INITIAL_MISSIONS)
 
   const canConfirmCheckIn =
     Boolean(energy) && availableMinutes !== null
@@ -84,6 +100,20 @@ function NowPage() {
     )
   }
 
+  function handleSaveNextAction(missionId, nextAction) {
+    setMissions((currentMissions) =>
+      currentMissions.map((mission) =>
+        mission.id === missionId
+          ? {
+              ...mission,
+              nextAction,
+              updatedAt: new Date().toISOString(),
+            }
+          : mission,
+      ),
+    )
+  }
+
   return (
     <main className="now-checkin-page">
       <h1>Agora</h1>
@@ -144,10 +174,10 @@ function NowPage() {
               <ul>
                 {missions.map((mission) => (
                   <li key={mission.id}>
-                    <strong>{mission.title}</strong>
-                    <p>
-                      {mission.nextAction || 'Próxima ação ainda não definida'}
-                    </p>
+                    <MissionCard
+                      mission={mission}
+                      onSaveNextAction={handleSaveNextAction}
+                    />
                   </li>
                 ))}
               </ul>
