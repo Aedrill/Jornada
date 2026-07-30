@@ -21,6 +21,7 @@ function DailyMissionBoard({
   selectedMissionIds,
   onStartFocus,
   onChooseMission,
+  onCompleteMission,
   boardRef,
 }) {
   function findMissionByRole(role) {
@@ -112,14 +113,25 @@ function DailyMissionBoard({
                   {mission.status === 'completed' ? (
                     <p role="status">Missão concluída.</p>
                   ) : (
-                    isReady && (
+                    <>
+                      {isReady && (
+                        <button
+                          type="button"
+                          onClick={() => onStartFocus(mission)}
+                        >
+                          Começar por 5 minutos
+                        </button>
+                      )}
+
                       <button
                         type="button"
-                        onClick={() => onStartFocus(mission)}
+                        onClick={() =>
+                          onCompleteMission(mission.id)
+                        }
                       >
-                        Começar por 5 minutos
+                        Marcar como concluída
                       </button>
-                    )
+                    </>
                   )}
 
                   <button

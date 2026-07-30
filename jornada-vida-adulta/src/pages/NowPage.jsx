@@ -438,6 +438,24 @@ function NowPage() {
     setIsMissionListOpen(true)
   }
 
+  function handleCompleteMission(missionId) {
+    const completedAt = new Date().toISOString()
+
+    setMissions((currentMissions) =>
+      currentMissions.map((mission) =>
+        mission.id === missionId
+          ? {
+              ...mission,
+              status: 'completed',
+              completedAt,
+              continuationNote: '',
+              updatedAt: completedAt,
+            }
+          : mission,
+      ),
+    )
+  }
+
   function handleDeleteMission(missionId) {
     setMissions((currentMissions) =>
       currentMissions.filter(
@@ -610,6 +628,7 @@ function NowPage() {
             onChooseMission={
               handleOpenMissionListForRole
             }
+            onCompleteMission={handleCompleteMission}
           />
 
           <section aria-labelledby="recommendation-title">
