@@ -171,7 +171,25 @@ function NowPage() {
     })
   }
 
-  function handleExitFocus() {
+  function handleExitFocus(continuationNote) {
+    if (!activeFocusSession) {
+      return
+    }
+
+    const endedAt = new Date().toISOString()
+
+    setMissions((currentMissions) =>
+      currentMissions.map((mission) =>
+        mission.id === activeFocusSession.missionId
+          ? {
+              ...mission,
+              continuationNote,
+              updatedAt: endedAt,
+            }
+          : mission,
+      ),
+    )
+
     setActiveFocusSession(null)
   }
 

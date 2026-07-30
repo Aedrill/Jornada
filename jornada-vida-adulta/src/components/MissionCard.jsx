@@ -42,6 +42,13 @@ function MissionCard({
         <p>Próxima ação ainda não definida.</p>
       )}
 
+      {mission.continuationNote && (
+        <p>
+          <strong>Para retomar:</strong>{' '}
+          {mission.continuationNote}
+        </p>
+      )}
+
       <form onSubmit={handleSubmit}>
         <label htmlFor={`next-action-${mission.id}`}>
           Qual é a menor ação para começar?
