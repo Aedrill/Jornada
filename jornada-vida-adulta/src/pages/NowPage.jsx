@@ -14,6 +14,7 @@ function NowPage() {
   const [availableMinutes, setAvailableMinutes] = useState(null)
   const [isCheckInConfirmed, setIsCheckInConfirmed] = useState(false)
   const [captures, setCaptures] = useState([])
+  const [missions, setMissions] = useState([])
 
   const canConfirmCheckIn =
     Boolean(energy) && availableMinutes !== null
@@ -40,6 +41,7 @@ function NowPage() {
     const newCapture = {
       id: crypto.randomUUID(),
       text,
+      status: 'inbox',
       createdAt: new Date().toISOString(),
     }
 
@@ -49,8 +51,41 @@ function NowPage() {
     ])
   }
 
+  function handleConvertCaptureToMission(captureId) {
+    const capture = captures.find(
+      (currentCapture) => currentCapture.id === captureId,
+    )
+
+    if (!capture) {
+      return
+    }
+
+    const newMission = {
+      id: crypto.randomUUID(),
+      sourceCaptureId: capture.id,
+      title: capture.text,
+      nextAction: '',
+      status: 'active',
+      priorityType: null,
+      estimatedMinutes: null,
+      energyRequired: null,
+      createdAt: new Date().toISOString(),
+      completedAt: null,
+    }
+
+    setMissions((currentMissions) => [
+      newMission,
+      ...currentMissions,
+    ])
+    setCaptures((currentCaptures) =>
+      currentCaptures.filter(
+        (currentCapture) => currentCapture.id !== captureId,
+      ),
+    )
+  }
+
   return (
-    <main>
+    <main className="now-checkin-page">
       <h1>Agora</h1>
 
       <EnergyCheckIn
@@ -88,7 +123,32 @@ function NowPage() {
 
               <ul>
                 {captures.map((capture) => (
-                  <li key={capture.id}>{capture.text}</li>
+                  <li key={capture.id}>
+                    <span>{capture.text}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleConvertCaptureToMission(capture.id)}
+                    >
+                      Transformar em missão
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {missions.length > 0 && (
+            <section aria-labelledby="missions-title">
+              <h2 id="missions-title">Missões</h2>
+
+              <ul>
+                {missions.map((mission) => (
+                  <li key={mission.id}>
+                    <strong>{mission.title}</strong>
+                    <p>
+                      {mission.nextAction || 'Próxima ação ainda não definida'}
+                    </p>
+                  </li>
                 ))}
               </ul>
             </section>
