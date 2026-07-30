@@ -72,6 +72,7 @@ function NowPage() {
     setMissionListRoleFilter,
   ] = useState(null)
   const missionListSectionRef = useRef(null)
+  const dailyMissionBoardRef = useRef(null)
   const [captures, setCaptures] = useLocalStorageState(
     'jornada:v2:captures',
     [],
@@ -402,6 +403,24 @@ function NowPage() {
         },
       }
     })
+
+    const wasSelectedFromFilteredList =
+      missionListRoleFilter ===
+      mission.priorityType
+
+    if (!wasSelectedFromFilteredList) {
+      return
+    }
+
+    setMissionListRoleFilter(null)
+    setIsMissionListOpen(false)
+
+    requestAnimationFrame(() => {
+      dailyMissionBoardRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
+    })
   }
 
   function handleRemoveMissionFromToday(missionId) {
@@ -580,17 +599,19 @@ function NowPage() {
             <p>Tempo disponível: {availableMinutes} minutos</p>
           </section>
 
-          <DailyMissionBoard
-            missions={missions}
-            selectedMissionIds={
-              dailyPlan?.selections ??
-              EMPTY_DAILY_SELECTIONS
-            }
-            onStartFocus={handleStartFocus}
-            onChooseMission={
-              handleOpenMissionListForRole
-            }
-          />
+          <div ref={dailyMissionBoardRef}>
+            <DailyMissionBoard
+              missions={missions}
+              selectedMissionIds={
+                dailyPlan?.selections ??
+                EMPTY_DAILY_SELECTIONS
+              }
+              onStartFocus={handleStartFocus}
+              onChooseMission={
+                handleOpenMissionListForRole
+              }
+            />
+          </div>
 
           <section aria-labelledby="recommendation-title">
             <h2 id="recommendation-title">Missão recomendada</h2>
