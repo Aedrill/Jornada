@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import AvailableTimeCheckIn from '../components/AvailableTimeCheckIn'
+import DailyMissionBoard from '../components/DailyMissionBoard'
 import EnergyCheckIn from '../components/EnergyCheckIn'
 import FocusHistory from '../components/FocusHistory'
 import FocusMode from '../components/FocusMode'
@@ -394,6 +395,11 @@ function NowPage() {
             <p>Energia: {ENERGY_LABELS[energy]}</p>
             <p>Tempo disponível: {availableMinutes} minutos</p>
           </section>
+
+          <DailyMissionBoard
+            missions={missions}
+            onStartFocus={handleStartFocus}
+          />
 
           <section aria-labelledby="recommendation-title">
             <h2 id="recommendation-title">Missão recomendada</h2>
