@@ -124,6 +124,69 @@ function NowPage() {
     )
   }
 
+  function handleConvertParkedThoughtToCapture(
+    sessionId,
+    thoughtId,
+  ) {
+    const session = focusSessions.find(
+      (currentSession) =>
+        currentSession.id === sessionId,
+    )
+
+    const thought = session?.parkedThoughts?.find(
+      (currentThought) =>
+        currentThought.id === thoughtId,
+    )
+
+    if (!thought || thought.captureId) {
+      return
+    }
+
+    const captureId = crypto.randomUUID()
+    const convertedAt = new Date().toISOString()
+
+    const newCapture = {
+      id: captureId,
+      text: thought.text,
+      status: 'inbox',
+      createdAt: convertedAt,
+      source: {
+        type: 'parked-thought',
+        sessionId,
+        thoughtId,
+      },
+    }
+
+    setCaptures((currentCaptures) => [
+      newCapture,
+      ...currentCaptures,
+    ])
+
+    setFocusSessions((currentSessions) =>
+      currentSessions.map((currentSession) => {
+        if (currentSession.id !== sessionId) {
+          return currentSession
+        }
+
+        return {
+          ...currentSession,
+          parkedThoughts:
+            currentSession.parkedThoughts?.map(
+              (currentThought) =>
+                currentThought.id === thoughtId
+                  ? {
+                      ...currentThought,
+                      captureId,
+                      convertedToCaptureAt:
+                        convertedAt,
+                    }
+                  : currentThought,
+            ) ?? [],
+        }
+      }),
+    )
+  }
+
   function handleSaveNextAction(missionId, nextAction) {
     setMissions((currentMissions) =>
       currentMissions.map((mission) =>
@@ -403,6 +466,9 @@ function NowPage() {
       <FocusHistory
         sessions={focusSessions}
         missions={missions}
+        onConvertThoughtToCapture={
+          handleConvertParkedThoughtToCapture
+        }
       />
     </main>
   )

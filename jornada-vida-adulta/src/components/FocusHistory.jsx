@@ -23,7 +23,11 @@ function formatDuration(seconds) {
   return `${minutes} min ${remainingSeconds} s`
 }
 
-function FocusHistory({ sessions, missions }) {
+function FocusHistory({
+  sessions,
+  missions,
+  onConvertThoughtToCapture,
+}) {
   const recentSessions = sessions.slice(0, 5)
 
   if (recentSessions.length === 0) {
@@ -73,11 +77,35 @@ function FocusHistory({ sessions, missions }) {
                   </summary>
 
                   <ul>
-                    {session.parkedThoughts.map((thought) => (
-                      <li key={thought.id}>
-                        {thought.text}
-                      </li>
-                    ))}
+                    {session.parkedThoughts.map((thought) => {
+                      const wasConverted = Boolean(
+                        thought.captureId,
+                      )
+
+                      return (
+                        <li key={thought.id}>
+                          <span>{thought.text}</span>
+
+                          {wasConverted ? (
+                            <span role="status">
+                              Na caixa de entrada
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                onConvertThoughtToCapture(
+                                  session.id,
+                                  thought.id,
+                                )
+                              }
+                            >
+                              Enviar à caixa de entrada
+                            </button>
+                          )}
+                        </li>
+                      )
+                    })}
                   </ul>
                 </details>
               )}
