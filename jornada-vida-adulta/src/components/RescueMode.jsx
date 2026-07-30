@@ -45,7 +45,11 @@ const RESCUE_OPTIONS = [
   },
 ]
 
-function RescueMode({ mission, onClose }) {
+function RescueMode({
+  mission,
+  onClose,
+  onStartReducedFocus,
+}) {
   const [selectedReason, setSelectedReason] = useState('')
 
   const selectedOption = RESCUE_OPTIONS.find(
@@ -89,6 +93,15 @@ function RescueMode({ mission, onClose }) {
             <strong>Sua próxima ação:</strong>{' '}
             {mission.nextAction}
           </p>
+
+          <button
+            type="button"
+            onClick={() =>
+              onStartReducedFocus(selectedReason)
+            }
+          >
+            Começar por 2 minutos
+          </button>
         </div>
       )}
 

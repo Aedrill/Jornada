@@ -219,12 +219,30 @@ function NowPage() {
     setActiveFocusSession(null)
   }
 
+  function handleStartRescueFocus(rescueReason) {
+    if (!rescueMission) {
+      return
+    }
+
+    setActiveFocusSession({
+      id: crypto.randomUUID(),
+      missionId: rescueMission.id,
+      plannedMinutes: 2,
+      startedAt: new Date().toISOString(),
+      source: 'rescue',
+      rescueReason,
+    })
+
+    setRescueMissionId(null)
+  }
+
   if (rescueMission) {
     return (
       <main className="now-checkin-page">
         <RescueMode
           mission={rescueMission}
           onClose={() => setRescueMissionId(null)}
+          onStartReducedFocus={handleStartRescueFocus}
         />
       </main>
     )
