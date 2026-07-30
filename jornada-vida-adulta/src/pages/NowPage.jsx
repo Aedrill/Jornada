@@ -55,6 +55,8 @@ function NowPage() {
   const [energy, setEnergy] = useState('')
   const [availableMinutes, setAvailableMinutes] = useState(null)
   const [isCheckInConfirmed, setIsCheckInConfirmed] = useState(false)
+  const [isMissionListOpen, setIsMissionListOpen] =
+    useState(false)
   const [captures, setCaptures] = useLocalStorageState(
     'jornada:v2:captures',
     [],
@@ -617,35 +619,64 @@ function NowPage() {
 
       {missions.length > 0 && (
         <section aria-labelledby="missions-title">
-          <h2 id="missions-title">Missões</h2>
+          <button
+            type="button"
+            aria-expanded={isMissionListOpen}
+            aria-controls="mission-list-content"
+            onClick={() =>
+              setIsMissionListOpen(
+                (currentValue) => !currentValue,
+              )
+            }
+          >
+            {isMissionListOpen
+              ? 'Ocultar todas as missões'
+              : `Ver todas as missões (${missions.length})`}
+          </button>
 
-          <ul>
-            {missions.map((mission) => (
-              <li key={mission.id}>
-                <MissionCard
-                  mission={mission}
-                  onSaveNextAction={handleSaveNextAction}
-                  onSaveEstimatedMinutes={handleSaveEstimatedMinutes}
-                  onSaveEnergyRequired={handleSaveEnergyRequired}
-                  onSavePriorityType={handleSavePriorityType}
-                  onDeleteMission={handleDeleteMission}
-                  onStartFocus={handleStartFocus}
-                  onSelectForToday={
-                    handleSelectMissionForToday
-                  }
-                  onRemoveFromToday={
-                    handleRemoveMissionFromToday
-                  }
-                  isSelectedForToday={Boolean(
-                    mission.priorityType &&
-                      dailyPlan?.selections?.[
-                        mission.priorityType
-                      ] === mission.id,
-                  )}
-                />
-              </li>
-            ))}
-          </ul>
+          {isMissionListOpen && (
+            <div id="mission-list-content">
+              <h2 id="missions-title">Todas as missões</h2>
+
+              <ul>
+                {missions.map((mission) => (
+                  <li key={mission.id}>
+                    <MissionCard
+                      mission={mission}
+                      onSaveNextAction={
+                        handleSaveNextAction
+                      }
+                      onSaveEstimatedMinutes={
+                        handleSaveEstimatedMinutes
+                      }
+                      onSaveEnergyRequired={
+                        handleSaveEnergyRequired
+                      }
+                      onSavePriorityType={
+                        handleSavePriorityType
+                      }
+                      onDeleteMission={
+                        handleDeleteMission
+                      }
+                      onStartFocus={handleStartFocus}
+                      onSelectForToday={
+                        handleSelectMissionForToday
+                      }
+                      onRemoveFromToday={
+                        handleRemoveMissionFromToday
+                      }
+                      isSelectedForToday={Boolean(
+                        mission.priorityType &&
+                          dailyPlan?.selections?.[
+                            mission.priorityType
+                          ] === mission.id,
+                      )}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </section>
       )}
 
