@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import AvailableTimeCheckIn from '../components/AvailableTimeCheckIn'
 import EnergyCheckIn from '../components/EnergyCheckIn'
+import FocusMode from '../components/FocusMode'
 import MissionCard from '../components/MissionCard'
 import QuickCapture from '../components/QuickCapture'
 import { recommendMission } from '../utils/missionPrioritizer'
@@ -32,6 +33,15 @@ function NowPage() {
   const [isCheckInConfirmed, setIsCheckInConfirmed] = useState(false)
   const [captures, setCaptures] = useState([])
   const [missions, setMissions] = useState(INITIAL_MISSIONS)
+  const [activeFocusSession, setActiveFocusSession] =
+    useState(null)
+
+  const activeFocusMission = activeFocusSession
+    ? missions.find(
+        (mission) =>
+          mission.id === activeFocusSession.missionId,
+      )
+    : null
 
   const recommendedMission = recommendMission(
     missions,
@@ -152,6 +162,29 @@ function NowPage() {
     )
   }
 
+  function handleStartFocus(mission) {
+    setActiveFocusSession({
+      id: crypto.randomUUID(),
+      missionId: mission.id,
+      plannedMinutes: 5,
+      startedAt: new Date().toISOString(),
+    })
+  }
+
+  function handleExitFocus() {
+    setActiveFocusSession(null)
+  }
+
+  if (activeFocusSession && activeFocusMission) {
+    return (
+      <FocusMode
+        mission={activeFocusMission}
+        plannedMinutes={activeFocusSession.plannedMinutes}
+        onExit={handleExitFocus}
+      />
+    )
+  }
+
   return (
     <main className="now-checkin-page">
       <h1>Agora</h1>
@@ -205,7 +238,14 @@ function NowPage() {
                   minutos e respeita sua energia atual.
                 </p>
 
-                <button type="button">Começar por 5 minutos</button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleStartFocus(recommendedMission)
+                  }
+                >
+                  Começar por 5 minutos
+                </button>
               </article>
             ) : (
               <p>
