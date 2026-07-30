@@ -35,6 +35,7 @@ function NowPage() {
   const [missions, setMissions] = useState(INITIAL_MISSIONS)
   const [activeFocusSession, setActiveFocusSession] =
     useState(null)
+  const [, setFocusSessions] = useState([])
 
   const activeFocusMission = activeFocusSession
     ? missions.find(
@@ -171,23 +172,43 @@ function NowPage() {
     })
   }
 
-  function handleExitFocus(continuationNote) {
+  function handleExitFocus({
+    continuationNote,
+    outcome,
+  }) {
     if (!activeFocusSession) {
       return
     }
 
     const endedAt = new Date().toISOString()
+    const completedMission = outcome === 'completed'
+
+    setFocusSessions((currentSessions) => [
+      {
+        ...activeFocusSession,
+        outcome,
+        continuationNote,
+        endedAt,
+      },
+      ...currentSessions,
+    ])
 
     setMissions((currentMissions) =>
-      currentMissions.map((mission) =>
-        mission.id === activeFocusSession.missionId
-          ? {
-              ...mission,
-              continuationNote,
-              updatedAt: endedAt,
-            }
-          : mission,
-      ),
+      currentMissions.map((mission) => {
+        if (mission.id !== activeFocusSession.missionId) {
+          return mission
+        }
+
+        return {
+          ...mission,
+          continuationNote: completedMission
+            ? ''
+            : continuationNote,
+          status: completedMission ? 'completed' : 'active',
+          completedAt: completedMission ? endedAt : null,
+          updatedAt: endedAt,
+        }
+      }),
     )
 
     setActiveFocusSession(null)

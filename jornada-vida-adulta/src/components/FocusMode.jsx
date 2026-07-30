@@ -5,9 +5,13 @@ function FocusMode({ mission, plannedMinutes, onExit }) {
   const [continuationNote, setContinuationNote] = useState(
     mission.continuationNote ?? '',
   )
+  const [sessionOutcome, setSessionOutcome] = useState('paused')
 
   function handleExit() {
-    onExit(continuationNote.trim())
+    onExit({
+      continuationNote: continuationNote.trim(),
+      outcome: sessionOutcome,
+    })
   }
 
   return (
@@ -25,6 +29,49 @@ function FocusMode({ mission, plannedMinutes, onExit }) {
       </section>
 
       <FocusTimer plannedMinutes={plannedMinutes} />
+
+      <fieldset>
+        <legend>Como terminou este bloco?</legend>
+
+        <label>
+          <input
+            type="radio"
+            name="session-outcome"
+            value="paused"
+            checked={sessionOutcome === 'paused'}
+            onChange={(event) =>
+              setSessionOutcome(event.target.value)
+            }
+          />
+          Pausei por agora
+        </label>
+
+        <label>
+          <input
+            type="radio"
+            name="session-outcome"
+            value="continuing"
+            checked={sessionOutcome === 'continuing'}
+            onChange={(event) =>
+              setSessionOutcome(event.target.value)
+            }
+          />
+          Vou continuar depois
+        </label>
+
+        <label>
+          <input
+            type="radio"
+            name="session-outcome"
+            value="completed"
+            checked={sessionOutcome === 'completed'}
+            onChange={(event) =>
+              setSessionOutcome(event.target.value)
+            }
+          />
+          Concluí a missão
+        </label>
+      </fieldset>
 
       <section aria-labelledby="continuation-title">
         <h2 id="continuation-title">Onde você parou?</h2>

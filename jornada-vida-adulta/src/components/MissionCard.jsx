@@ -34,6 +34,10 @@ function MissionCard({
     <article>
       <h3>{mission.title}</h3>
 
+      {mission.status === 'completed' && (
+        <p role="status">Missão concluída.</p>
+      )}
+
       {mission.nextAction ? (
         <p>
           <strong>Próxima ação:</strong> {mission.nextAction}
@@ -49,67 +53,77 @@ function MissionCard({
         </p>
       )}
 
-      <form onSubmit={handleSubmit}>
-        <label htmlFor={`next-action-${mission.id}`}>
-          Qual é a menor ação para começar?
-        </label>
+      {mission.status === 'active' && (
+        <>
+          <form onSubmit={handleSubmit}>
+            <label htmlFor={`next-action-${mission.id}`}>
+              Qual é a menor ação para começar?
+            </label>
 
-        <input
-          id={`next-action-${mission.id}`}
-          type="text"
-          value={nextActionDraft}
-          onChange={(event) =>
-            setNextActionDraft(event.target.value)
-          }
-          placeholder="Ex.: abrir o arquivo"
-          autoComplete="off"
-        />
+            <input
+              id={`next-action-${mission.id}`}
+              type="text"
+              value={nextActionDraft}
+              onChange={(event) =>
+                setNextActionDraft(event.target.value)
+              }
+              placeholder="Ex.: abrir o arquivo"
+              autoComplete="off"
+            />
 
-        <button
-          type="submit"
-          disabled={!nextActionDraft.trim()}
-        >
-          Salvar próxima ação
-        </button>
-      </form>
-
-      <fieldset>
-        <legend>Quanto tempo esta missão deve levar?</legend>
-        <div>
-          {DURATION_OPTIONS.map((minutes) => (
             <button
-              key={minutes}
-              type="button"
-              aria-pressed={mission.estimatedMinutes === minutes}
-              onClick={() => onSaveEstimatedMinutes(mission.id, minutes)}
+              type="submit"
+              disabled={!nextActionDraft.trim()}
             >
-              {minutes} min
+              Salvar próxima ação
             </button>
-          ))}
-        </div>
-      </fieldset>
+          </form>
 
-      <fieldset>
-        <legend>Quanta energia esta missão exige?</legend>
-        <div>
-          {ENERGY_REQUIREMENT_OPTIONS.map((option) => {
-            const isSelected = mission.energyRequired === option.value
+          <fieldset>
+            <legend>Quanto tempo esta missão deve levar?</legend>
+            <div>
+              {DURATION_OPTIONS.map((minutes) => (
+                <button
+                  key={minutes}
+                  type="button"
+                  aria-pressed={mission.estimatedMinutes === minutes}
+                  onClick={() =>
+                    onSaveEstimatedMinutes(mission.id, minutes)
+                  }
+                >
+                  {minutes} min
+                </button>
+              ))}
+            </div>
+          </fieldset>
 
-            return (
-              <button
-                key={option.value}
-                type="button"
-                aria-pressed={isSelected}
-                onClick={() =>
-                  onSaveEnergyRequired(mission.id, option.value)
-                }
-              >
-                {option.label}
-              </button>
-            )
-          })}
-        </div>
-      </fieldset>
+          <fieldset>
+            <legend>Quanta energia esta missão exige?</legend>
+            <div>
+              {ENERGY_REQUIREMENT_OPTIONS.map((option) => {
+                const isSelected =
+                  mission.energyRequired === option.value
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    aria-pressed={isSelected}
+                    onClick={() =>
+                      onSaveEnergyRequired(
+                        mission.id,
+                        option.value,
+                      )
+                    }
+                  >
+                    {option.label}
+                  </button>
+                )
+              })}
+            </div>
+          </fieldset>
+        </>
+      )}
     </article>
   )
 }
