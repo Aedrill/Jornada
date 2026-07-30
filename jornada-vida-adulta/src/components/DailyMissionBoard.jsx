@@ -38,12 +38,51 @@ function DailyMissionBoard({
     )
   }
 
+  const dailyMissions = DAILY_ROLES.map((role) =>
+    findMissionByRole(role.value),
+  )
+
+  const completedMissionCount = dailyMissions.filter(
+    (mission) => mission?.status === 'completed',
+  ).length
+
+  const selectedMissionCount = dailyMissions.filter(
+    Boolean,
+  ).length
+
   return (
     <section
       ref={boardRef}
       aria-labelledby="daily-missions-title"
     >
       <h2 id="daily-missions-title">Suas três missões</h2>
+
+      <div aria-live="polite">
+        <p>
+          {completedMissionCount} de 3 missões concluídas
+        </p>
+
+        <progress
+          value={completedMissionCount}
+          max="3"
+          aria-label={`${completedMissionCount} de 3 missões concluídas`}
+        />
+
+        {selectedMissionCount < 3 && (
+          <p>
+            {3 - selectedMissionCount}{' '}
+            {3 - selectedMissionCount === 1
+              ? 'espaço disponível'
+              : 'espaços disponíveis'}
+          </p>
+        )}
+
+        {completedMissionCount === 3 && (
+          <p role="status">
+            As três missões do dia foram concluídas.
+          </p>
+        )}
+      </div>
 
       <div>
         {DAILY_ROLES.map((role) => {
