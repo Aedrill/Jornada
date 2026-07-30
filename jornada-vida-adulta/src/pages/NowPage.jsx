@@ -3,6 +3,7 @@ import AvailableTimeCheckIn from '../components/AvailableTimeCheckIn'
 import EnergyCheckIn from '../components/EnergyCheckIn'
 import MissionCard from '../components/MissionCard'
 import QuickCapture from '../components/QuickCapture'
+import { recommendMission } from '../utils/missionPrioritizer'
 
 const ENERGY_LABELS = {
   low: 'Baixa',
@@ -31,6 +32,12 @@ function NowPage() {
   const [isCheckInConfirmed, setIsCheckInConfirmed] = useState(false)
   const [captures, setCaptures] = useState([])
   const [missions, setMissions] = useState(INITIAL_MISSIONS)
+
+  const recommendedMission = recommendMission(
+    missions,
+    availableMinutes,
+    energy,
+  )
 
   const canConfirmCheckIn =
     Boolean(energy) && availableMinutes !== null
@@ -174,6 +181,38 @@ function NowPage() {
 
             <p>Energia: {ENERGY_LABELS[energy]}</p>
             <p>Tempo disponível: {availableMinutes} minutos</p>
+          </section>
+
+          <section aria-labelledby="recommendation-title">
+            <h2 id="recommendation-title">Missão recomendada</h2>
+
+            {recommendedMission ? (
+              <article>
+                <h3>{recommendedMission.title}</h3>
+
+                <p>
+                  <strong>Próxima ação:</strong>{' '}
+                  {recommendedMission.nextAction}
+                </p>
+
+                <p>
+                  Tempo estimado: {recommendedMission.estimatedMinutes}{' '}
+                  minutos
+                </p>
+
+                <p>
+                  Recomendada porque cabe nos seus {availableMinutes}{' '}
+                  minutos e respeita sua energia atual.
+                </p>
+
+                <button type="button">Começar por 5 minutos</button>
+              </article>
+            ) : (
+              <p>
+                Ainda não há uma missão compatível com seu tempo e
+                energia.
+              </p>
+            )}
           </section>
 
           <QuickCapture onCapture={handleCapture} />
