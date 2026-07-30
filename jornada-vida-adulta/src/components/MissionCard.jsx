@@ -1,6 +1,8 @@
 import { useState } from 'react'
 
-function MissionCard({ mission, onSaveNextAction }) {
+const DURATION_OPTIONS = [5, 15, 30, 60]
+
+function MissionCard({ mission, onSaveNextAction, onSaveEstimatedMinutes }) {
   const [nextActionDraft, setNextActionDraft] = useState(
     mission.nextAction,
   )
@@ -52,6 +54,22 @@ function MissionCard({ mission, onSaveNextAction }) {
           Salvar próxima ação
         </button>
       </form>
+
+      <fieldset>
+        <legend>Quanto tempo esta missão deve levar?</legend>
+        <div>
+          {DURATION_OPTIONS.map((minutes) => (
+            <button
+              key={minutes}
+              type="button"
+              aria-pressed={mission.estimatedMinutes === minutes}
+              onClick={() => onSaveEstimatedMinutes(mission.id, minutes)}
+            >
+              {minutes} min
+            </button>
+          ))}
+        </div>
+      </fieldset>
     </article>
   )
 }

@@ -114,6 +114,20 @@ function NowPage() {
     )
   }
 
+  function handleSaveEstimatedMinutes(missionId, estimatedMinutes) {
+    setMissions((currentMissions) =>
+      currentMissions.map((mission) =>
+        mission.id === missionId
+          ? {
+              ...mission,
+              estimatedMinutes,
+              updatedAt: new Date().toISOString(),
+            }
+          : mission,
+      ),
+    )
+  }
+
   return (
     <main className="now-checkin-page">
       <h1>Agora</h1>
@@ -177,6 +191,7 @@ function NowPage() {
                     <MissionCard
                       mission={mission}
                       onSaveNextAction={handleSaveNextAction}
+                      onSaveEstimatedMinutes={handleSaveEstimatedMinutes}
                     />
                   </li>
                 ))}
