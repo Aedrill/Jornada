@@ -448,7 +448,6 @@ function NowPage() {
               ...mission,
               status: 'completed',
               completedAt,
-              continuationNote: '',
               updatedAt: completedAt,
             }
           : mission,
@@ -552,7 +551,7 @@ function NowPage() {
         return {
           ...mission,
           continuationNote: completedMission
-            ? ''
+            ? mission.continuationNote ?? ''
             : continuationNote,
           status: completedMission ? 'completed' : 'active',
           completedAt: completedMission ? endedAt : null,
