@@ -101,7 +101,10 @@ function MissionCard({
 
       {mission.status === 'active' && (
         <>
-          <form onSubmit={handleSubmit}>
+          <form
+            className="mission-next-action-form"
+            onSubmit={handleSubmit}
+          >
             <label htmlFor={`next-action-${mission.id}`}>
               Qual é a menor ação para começar?
             </label>

@@ -52,6 +52,18 @@ function DailyMissionBoard({
     Boolean,
   ).length
 
+  const hasSelectedMissions =
+    selectedMissionCount > 0
+
+  const allSelectedMissionsCompleted =
+    hasSelectedMissions &&
+    completedMissionCount === selectedMissionCount
+
+  const progressMaximum = Math.max(
+    selectedMissionCount,
+    1,
+  )
+
   return (
     <section
       ref={boardRef}
@@ -60,14 +72,26 @@ function DailyMissionBoard({
       <h2 id="daily-missions-title">Suas três missões</h2>
 
       <div aria-live="polite">
-        <p>
-          {completedMissionCount} de 3 missões concluídas
-        </p>
+        {hasSelectedMissions ? (
+          <p>
+            {completedMissionCount} de{' '}
+            {selectedMissionCount}{' '}
+            {selectedMissionCount === 1
+              ? 'missão escolhida concluída'
+              : 'missões escolhidas concluídas'}
+          </p>
+        ) : (
+          <p>Nenhuma missão escolhida para hoje.</p>
+        )}
 
         <progress
           value={completedMissionCount}
-          max="3"
-          aria-label={`${completedMissionCount} de 3 missões concluídas`}
+          max={progressMaximum}
+          aria-label={
+            hasSelectedMissions
+              ? `${completedMissionCount} de ${selectedMissionCount} missões escolhidas concluídas`
+              : 'Nenhuma missão escolhida para hoje'
+          }
         />
 
         {selectedMissionCount < 3 && (
@@ -79,9 +103,11 @@ function DailyMissionBoard({
           </p>
         )}
 
-        {completedMissionCount === 3 && (
+        {allSelectedMissionsCompleted && (
           <p role="status">
-            As três missões do dia foram concluídas.
+            {selectedMissionCount === 1
+              ? 'A missão escolhida foi concluída.'
+              : 'Todas as missões escolhidas foram concluídas.'}
           </p>
         )}
       </div>
