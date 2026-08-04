@@ -111,6 +111,14 @@ function DailyMissionBoard({
                       'Próxima ação ainda não definida.'}
                   </p>
 
+                  {mission.status === 'active' &&
+                    mission.continuationNote && (
+                      <p>
+                        <strong>Ponto de retomada:</strong>{' '}
+                        {mission.continuationNote}
+                      </p>
+                    )}
+
                   {mission.status === 'completed' ? (
                     <>
                       <p role="status">Missão concluída.</p>
