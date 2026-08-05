@@ -2,20 +2,23 @@
 
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
+import { AuthProvider } from '../auth/AuthContext'
 import DataProtectionPage from './DataProtectionPage'
 
 afterEach(cleanup)
 
 function renderDataProtectionPage() {
   render(
-    <DataProtectionPage
-      captures={[]}
-      missions={[]}
-      activeFocusSession={null}
-      focusSessions={[]}
-      dailyPlan={{ dateKey: '2026-08-05', selections: {} }}
-      onRestore={() => {}}
-    />,
+    <AuthProvider>
+      <DataProtectionPage
+        captures={[]}
+        missions={[]}
+        activeFocusSession={null}
+        focusSessions={[]}
+        dailyPlan={{ dateKey: '2026-08-05', selections: {} }}
+        onRestore={() => {}}
+      />
+    </AuthProvider>,
   )
 }
 
@@ -49,6 +52,22 @@ describe('DataProtectionPage', () => {
     ).toBeTruthy()
     expect(
       screen.getByLabelText('Escolher arquivo de backup'),
+    ).toBeTruthy()
+  })
+
+  it('apresenta a conta antes da proteção dos dados', () => {
+    renderDataProtectionPage()
+
+    const accountTitle = screen.getByRole('heading', {
+      name: 'Sua conta',
+    })
+    const backupTitle = screen.getByRole('heading', {
+      name: 'Proteção dos seus dados',
+    })
+
+    expect(
+      accountTitle.compareDocumentPosition(backupTitle) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy()
   })
 })

@@ -1,5 +1,10 @@
+import { AuthProvider } from './auth/AuthContext'
 import NowPage from './pages/NowPage'
 
 export default function App() {
-  return <NowPage />
+  return (
+    <AuthProvider>
+      <NowPage />
+    </AuthProvider>
+  )
 }

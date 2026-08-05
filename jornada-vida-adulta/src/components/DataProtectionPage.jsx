@@ -1,3 +1,4 @@
+import AccountPanel from './AccountPanel'
 import DataBackup from './DataBackup'
 
 function DataProtectionPage({
@@ -18,6 +19,8 @@ function DataProtectionPage({
           restaure um backup anterior.
         </p>
       </header>
+
+      <AccountPanel />
 
       <DataBackup
         captures={captures}
