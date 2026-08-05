@@ -457,7 +457,7 @@
   accent-color: #315f50;
 }
 
-.account-panel {
+.now-checkin-page > section.account-panel {
   margin-top: 34px;
   padding: 24px;
   border: 1px solid #dfe6dd;
@@ -466,24 +466,27 @@
   text-align: left;
 }
 
-.account-panel h2,
-.account-panel h3 {
+.now-checkin-page > section.account-panel h2,
+.now-checkin-page > section.account-panel h3 {
   margin-top: 0;
 }
 
-.account-mode-selector {
+.now-checkin-page > section.account-panel >
+  .account-mode-selector {
   width: min(100%, 360px);
-  margin-bottom: 18px;
+  margin: 16px 0 18px;
   padding: 4px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  justify-content: initial;
   gap: 4px;
   border: 1px solid #dce4dc;
   border-radius: 12px;
   background: #edf1e9;
 }
 
-.account-mode-selector button {
+.now-checkin-page > section.account-panel
+  .account-mode-selector button {
   min-width: 0;
   min-height: 44px;
   padding: 10px 14px;
@@ -494,25 +497,26 @@
   font-weight: 700;
 }
 
-.account-mode-selector button[aria-pressed="true"] {
+.now-checkin-page > section.account-panel
+  .account-mode-selector button[aria-pressed="true"] {
   color: #fff;
   background: #275c4e;
 }
 
-.account-form {
+.now-checkin-page > section.account-panel .account-form {
   width: min(100%, 440px);
   display: grid;
   gap: 16px;
 }
 
-.account-field {
+.now-checkin-page > section.account-panel .account-field {
   display: grid;
   gap: 7px;
   color: #31483e;
   font-weight: 700;
 }
 
-.account-field input {
+.now-checkin-page > section.account-panel .account-field input {
   width: 100%;
   min-height: 46px;
   padding: 11px 13px;
@@ -523,8 +527,10 @@
   font: inherit;
 }
 
-.account-form > button,
-.account-status > button {
+.now-checkin-page > section.account-panel
+  .account-form > button,
+.now-checkin-page > section.account-panel
+  .account-status > button {
   min-height: 44px;
   padding: 11px 18px;
   border: 0;
@@ -534,30 +540,41 @@
   font-weight: 700;
 }
 
-.account-panel button:hover:not(:disabled) {
+.now-checkin-page > section.account-panel
+  button:hover:not(:disabled) {
   background: #1f4d41;
 }
 
-.account-panel button:active:not(:disabled) {
+.now-checkin-page > section.account-panel
+  button:active:not(:disabled) {
   transform: translateY(1px);
 }
 
-.account-panel button:focus-visible,
-.account-field input:focus-visible {
+.now-checkin-page > section.account-panel button:focus-visible,
+.now-checkin-page > section.account-panel
+  .account-field input:focus-visible {
   outline: 3px solid #a9c88f;
   outline-offset: 2px;
 }
 
-.account-panel button:disabled {
+.now-checkin-page > section.account-panel button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
 }
 
-.account-status {
+.now-checkin-page > section.account-panel >
+  .account-status {
+  margin-top: 16px;
+  display: grid;
+  justify-content: initial;
+  justify-items: start;
+  gap: 12px;
   color: #476458;
+  text-align: left;
 }
 
-.account-notice {
+.now-checkin-page > section.account-panel
+  .account-notice {
   padding: 14px 16px;
   border-radius: 12px;
   color: #52665d;
@@ -565,24 +582,26 @@
   line-height: 1.5;
 }
 
-.account-error {
+.now-checkin-page > section.account-panel
+  .account-error {
   color: #8b3f3f;
   font-weight: 700;
 }
 
 @media (max-width: 560px) {
-  .account-panel {
+  .now-checkin-page > section.account-panel {
     padding: 20px;
   }
 
-  .account-form,
-  .account-form button {
+  .now-checkin-page > section.account-panel .account-form,
+  .now-checkin-page > section.account-panel
+    .account-form button {
     width: 100%;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .account-panel button {
+  .now-checkin-page > section.account-panel button {
     transition: none;
   }
 }
