@@ -50,6 +50,17 @@ function MissionCard({
   const [isConfirmingDelete, setIsConfirmingDelete] =
     useState(false)
 
+  const needsSetup = Boolean(
+    !mission.nextAction ||
+      !mission.estimatedMinutes ||
+      !mission.energyRequired ||
+      !mission.priorityType,
+  )
+
+  const [areDetailsOpen, setAreDetailsOpen] = useState(
+    needsSetup,
+  )
+
   const canStartFocus = Boolean(
     mission.status === 'active' &&
       mission.nextAction &&
@@ -100,7 +111,21 @@ function MissionCard({
       )}
 
       {mission.status === 'active' && (
-        <>
+        <details
+          className="mission-details"
+          open={areDetailsOpen}
+          onToggle={(event) =>
+            setAreDetailsOpen(event.currentTarget.open)
+          }
+        >
+          <summary>
+            {areDetailsOpen
+              ? 'Ocultar detalhes da missão'
+              : needsSetup
+                ? 'Configurar missão'
+                : 'Editar detalhes da missão'}
+          </summary>
+
           <form
             className="mission-next-action-form"
             onSubmit={handleSubmit}
@@ -201,7 +226,7 @@ function MissionCard({
               })}
             </div>
           </fieldset>
-        </>
+        </details>
       )}
 
       {mission.status === 'active' &&
