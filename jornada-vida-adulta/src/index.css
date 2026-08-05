@@ -89,6 +89,67 @@
   font-weight: 700;
 }
 
+.data-backup-restore {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid #e2e7df;
+}
+
+.data-backup-restore label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.data-backup-restore input[type="file"] {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d7dfd8;
+  border-radius: 11px;
+  background: #f8faf7;
+}
+
+.backup-preview {
+  margin-top: 20px;
+  padding: 18px;
+  border: 1px solid #dfe6dd;
+  border-radius: 14px;
+  background: #f8faf7;
+}
+
+.backup-preview ul {
+  padding-left: 20px;
+}
+
+.backup-confirmation {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid #e2c7c7;
+  border-radius: 12px;
+  background: #fff5f5;
+}
+
+.backup-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.data-backup .danger-button {
+  background: #8b3f3f;
+}
+
+.data-backup .secondary-button {
+  color: #40564d;
+  border: 1px solid #ccd8d1;
+  background: #fff;
+}
+
+.backup-error {
+  color: #8b3f3f;
+  font-weight: 700;
+}
+
 @media (max-width: 560px) {
   .mission-next-action-form {
     grid-template-columns: 1fr;
@@ -106,5 +167,9 @@
 @media (max-width: 560px) {
   .data-backup button {
     width: 100%;
+  }
+
+  .backup-actions {
+    display: grid;
   }
 }

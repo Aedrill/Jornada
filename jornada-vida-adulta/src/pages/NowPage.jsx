@@ -514,6 +514,20 @@ function NowPage() {
     })
   }
 
+  function handleRestoreBackup(restoredData) {
+    setCaptures(restoredData.captures)
+    setMissions(restoredData.missions)
+    setActiveFocusSession(
+      restoredData.activeFocusSession,
+    )
+    setFocusSessions(restoredData.focusSessions)
+    setDailyPlan(restoredData.dailyPlan)
+
+    setRescueMissionId(null)
+    setMissionListRoleFilter(null)
+    setIsMissionListOpen(false)
+  }
+
   function handleExitFocus({
     continuationNote,
     outcome,
@@ -867,6 +881,7 @@ function NowPage() {
         activeFocusSession={activeFocusSession}
         focusSessions={focusSessions}
         dailyPlan={dailyPlan}
+        onRestore={handleRestoreBackup}
       />
     </main>
   )
