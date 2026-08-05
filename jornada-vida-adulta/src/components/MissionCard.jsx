@@ -260,7 +260,9 @@ function MissionCard({
             type="button"
             onClick={() => onStartFocus(mission)}
           >
-            Começar por 5 minutos
+            {mission.continuationNote?.trim()
+              ? 'Continuar por 5 minutos'
+              : 'Começar por 5 minutos'}
           </button>
         </section>
       )}

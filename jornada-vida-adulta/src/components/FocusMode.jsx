@@ -42,6 +42,10 @@ function FocusMode({
     )
   }
 
+  const currentFocusAction =
+    mission.continuationNote?.trim() ||
+    mission.nextAction
+
   return (
     <main aria-labelledby="focus-mode-title">
       <p>Modo Foco</p>
@@ -53,7 +57,7 @@ function FocusMode({
           Faça apenas isto agora
         </h2>
 
-        <p>{mission.nextAction}</p>
+        <p>{currentFocusAction}</p>
       </section>
 
       <FocusTimer
