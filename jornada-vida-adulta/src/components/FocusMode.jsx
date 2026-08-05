@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createId } from '../utils/createId'
 import FocusTimer from './FocusTimer'
 import ThoughtParkingLot from './ThoughtParkingLot'
 
@@ -21,7 +22,7 @@ function FocusMode({ mission, plannedMinutes, onExit }) {
     setParkedThoughts((currentThoughts) => [
       ...currentThoughts,
       {
-        id: crypto.randomUUID(),
+        id: createId(),
         text,
         createdAt: new Date().toISOString(),
       },

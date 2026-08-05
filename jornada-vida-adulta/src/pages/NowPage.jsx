@@ -12,6 +12,7 @@ import MissionCard from '../components/MissionCard'
 import QuickCapture from '../components/QuickCapture'
 import RescueMode from '../components/RescueMode'
 import useLocalStorageState from '../hooks/useLocalStorageState'
+import { createId } from '../utils/createId'
 import { getLocalDateKey } from '../utils/dateKey'
 import { recommendMission } from '../utils/missionPrioritizer'
 
@@ -177,7 +178,7 @@ function NowPage() {
 
   function handleCapture(text) {
     const newCapture = {
-      id: crypto.randomUUID(),
+      id: createId(),
       text,
       status: 'inbox',
       createdAt: new Date().toISOString(),
@@ -199,7 +200,7 @@ function NowPage() {
     }
 
     const newMission = {
-      id: crypto.randomUUID(),
+      id: createId(),
       sourceCaptureId: capture.id,
       title: capture.text,
       nextAction: '',
@@ -240,7 +241,7 @@ function NowPage() {
       return
     }
 
-    const captureId = crypto.randomUUID()
+    const captureId = createId()
     const convertedAt = new Date().toISOString()
 
     const newCapture = {
@@ -497,7 +498,7 @@ function NowPage() {
 
   function handleStartFocus(mission) {
     setActiveFocusSession({
-      id: crypto.randomUUID(),
+      id: createId(),
       missionId: mission.id,
       plannedMinutes: 5,
       startedAt: new Date().toISOString(),
@@ -569,7 +570,7 @@ function NowPage() {
     }
 
     setActiveFocusSession({
-      id: crypto.randomUUID(),
+      id: createId(),
       missionId: rescueMission.id,
       plannedMinutes: 2,
       startedAt: new Date().toISOString(),
