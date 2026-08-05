@@ -231,6 +231,7 @@ as
 select created_at
 from public.user_state
 where user_id = '11111111-1111-4111-8111-111111111111';
+grant select on user1_metadata_before to authenticated;
 
 set local role authenticated;
 select set_config(
