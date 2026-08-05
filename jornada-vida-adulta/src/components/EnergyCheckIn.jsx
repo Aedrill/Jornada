@@ -1,9 +1,34 @@
-export default function EnergyCheckIn({ checkin, plannedMinutes, onChange }) {
+const ENERGY_OPTIONS = [
+  { value: 'low', label: 'Baixa' },
+  { value: 'medium', label: 'Média' },
+  { value: 'high', label: 'Alta' },
+]
+
+function EnergyCheckIn({ value, onChange }) {
   return (
-    <div className="energy-checkin">
-      <fieldset><legend>Como está sua energia agora?</legend><div>{[['low', 'Baixa'], ['medium', 'Média'], ['high', 'Alta']].map(([value, label]) => <button type="button" className={checkin.energy === value ? 'selected' : ''} key={value} onClick={() => onChange('energy', value)}>{label}</button>)}</div></fieldset>
-      <fieldset><legend>Você tem quanto tempo?</legend><div>{[[5, '5 min'], [15, '15 min'], [30, '30 min'], [60, 'Mais']].map(([value, label]) => <button type="button" className={checkin.availableMinutes === value ? 'selected' : ''} key={value} onClick={() => onChange('availableMinutes', value)}>{label}</button>)}</div></fieldset>
-      {plannedMinutes > checkin.availableMinutes && <small className="gentle-hint">Vamos começar menor que o plano. Tudo bem ajustar o restante depois.</small>}
-    </div>
+    <section aria-labelledby="energy-title">
+      <h2 id="energy-title">Como está sua energia agora?</h2>
+
+      <div>
+        {ENERGY_OPTIONS.map((option) => {
+          const isSelected = value === option.value
+
+          return (
+            <button
+              key={option.value}
+              type="button"
+              aria-pressed={isSelected}
+              onClick={() => onChange(option.value)}
+            >
+              {option.label}
+            </button>
+          )
+        })}
+      </div>
+
+      {value && <p>Energia registrada.</p>}
+    </section>
   )
 }
+
+export default EnergyCheckIn
