@@ -71,7 +71,10 @@ function DailyMissionBoard({
     >
       <h2 id="daily-missions-title">Suas três missões</h2>
 
-      <div aria-live="polite">
+      <div
+        className="daily-mission-progress"
+        aria-live="polite"
+      >
         {hasSelectedMissions ? (
           <p>
             {completedMissionCount} de{' '}

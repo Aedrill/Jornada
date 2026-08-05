@@ -435,3 +435,24 @@
     transition: none;
   }
 }
+
+.now-checkin-page > section > .daily-mission-progress {
+  width: min(100%, 420px);
+  margin: 16px auto 0;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.daily-mission-progress p {
+  margin: 0;
+}
+
+.daily-mission-progress progress {
+  display: block;
+  width: min(100%, 320px);
+  height: 12px;
+  margin: 0 auto;
+  accent-color: #315f50;
+}
