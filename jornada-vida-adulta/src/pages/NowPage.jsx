@@ -4,6 +4,7 @@ import {
   useState,
 } from 'react'
 import AvailableTimeCheckIn from '../components/AvailableTimeCheckIn'
+import DataBackup from '../components/DataBackup'
 import DailyMissionBoard from '../components/DailyMissionBoard'
 import EnergyCheckIn from '../components/EnergyCheckIn'
 import FocusHistory from '../components/FocusHistory'
@@ -858,6 +859,14 @@ function NowPage() {
         onConvertThoughtToCapture={
           handleConvertParkedThoughtToCapture
         }
+      />
+
+      <DataBackup
+        captures={captures}
+        missions={missions}
+        activeFocusSession={activeFocusSession}
+        focusSessions={focusSessions}
+        dailyPlan={dailyPlan}
       />
     </main>
   )
