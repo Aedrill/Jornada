@@ -4,8 +4,9 @@ import {
   useState,
 } from 'react'
 import AvailableTimeCheckIn from '../components/AvailableTimeCheckIn'
-import DataBackup from '../components/DataBackup'
+import AppSectionNavigation from '../components/AppSectionNavigation'
 import DailyMissionBoard from '../components/DailyMissionBoard'
+import DataProtectionPage from '../components/DataProtectionPage'
 import EnergyCheckIn from '../components/EnergyCheckIn'
 import FocusHistory from '../components/FocusHistory'
 import FocusMode from '../components/FocusMode'
@@ -67,6 +68,7 @@ function NowPage() {
 
   const [energy, setEnergy] = useState('')
   const [hasEnteredApp, setHasEnteredApp] = useState(false)
+  const [activeSection, setActiveSection] = useState('now')
   const [availableMinutes, setAvailableMinutes] = useState(null)
   const [isCheckInConfirmed, setIsCheckInConfirmed] = useState(false)
   const [isMissionListOpen, setIsMissionListOpen] =
@@ -655,35 +657,51 @@ function NowPage() {
 
   return (
     <main className="now-checkin-page">
-      <header className="norte-checkin-header">
-        <p className="norte-wordmark">NORTE</p>
-        <h1>Foque no Agora</h1>
-        <p className="checkin-subtitle">
-          Responda só o que importa para este momento.
-        </p>
-      </header>
-
-      <EnergyCheckIn
-        value={energy}
-        onChange={handleEnergyChange}
+      <AppSectionNavigation
+        value={activeSection}
+        onChange={setActiveSection}
       />
 
-      <AvailableTimeCheckIn
-        value={availableMinutes}
-        onChange={handleAvailableTimeChange}
-      />
-
-      <button
-        className="prepare-missions-button"
-        type="button"
-        disabled={!canConfirmCheckIn}
-        onClick={handleConfirmCheckIn}
-      >
-        Encontrar meu próximo passo
-      </button>
-
-      {isCheckInConfirmed && (
+      {activeSection === 'data' ? (
+        <DataProtectionPage
+          captures={captures}
+          missions={missions}
+          activeFocusSession={activeFocusSession}
+          focusSessions={focusSessions}
+          dailyPlan={dailyPlan}
+          onRestore={handleRestoreBackup}
+        />
+      ) : (
         <>
+          <header className="norte-checkin-header">
+            <p className="norte-wordmark">NORTE</p>
+            <h1>Foque no Agora</h1>
+            <p className="checkin-subtitle">
+              Responda só o que importa para este momento.
+            </p>
+          </header>
+
+          <EnergyCheckIn
+            value={energy}
+            onChange={handleEnergyChange}
+          />
+
+          <AvailableTimeCheckIn
+            value={availableMinutes}
+            onChange={handleAvailableTimeChange}
+          />
+
+          <button
+            className="prepare-missions-button"
+            type="button"
+            disabled={!canConfirmCheckIn}
+            onClick={handleConfirmCheckIn}
+          >
+            Encontrar meu próximo passo
+          </button>
+
+          {isCheckInConfirmed && (
+            <>
           <section aria-live="polite">
             <h2>Check-in concluído</h2>
 
@@ -755,10 +773,10 @@ function NowPage() {
           </section>
 
           <QuickCapture onCapture={handleCapture} />
-        </>
-      )}
+            </>
+          )}
 
-      {captures.length > 0 && (
+          {captures.length > 0 && (
         <section aria-labelledby="captures-title">
           <h2 id="captures-title">Caixa de entrada</h2>
 
@@ -778,9 +796,9 @@ function NowPage() {
             ))}
           </ul>
         </section>
-      )}
+          )}
 
-      {missions.length > 0 && (
+          {missions.length > 0 && (
         <section
           ref={missionListSectionRef}
           aria-labelledby="missions-title"
@@ -882,24 +900,17 @@ function NowPage() {
             </div>
           )}
         </section>
+          )}
+
+          <FocusHistory
+            sessions={focusSessions}
+            missions={missions}
+            onConvertThoughtToCapture={
+              handleConvertParkedThoughtToCapture
+            }
+          />
+        </>
       )}
-
-      <FocusHistory
-        sessions={focusSessions}
-        missions={missions}
-        onConvertThoughtToCapture={
-          handleConvertParkedThoughtToCapture
-        }
-      />
-
-      <DataBackup
-        captures={captures}
-        missions={missions}
-        activeFocusSession={activeFocusSession}
-        focusSessions={focusSessions}
-        dailyPlan={dailyPlan}
-        onRestore={handleRestoreBackup}
-      />
     </main>
   )
 }
