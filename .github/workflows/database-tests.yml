@@ -1,0 +1,45 @@
+name: Database tests
+
+on:
+  pull_request:
+    paths:
+      - "supabase/**"
+      - ".github/workflows/database-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  database-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.111.0
+
+      - name: Start local database
+        run: supabase db start
+
+      - name: Recreate database from migrations
+        run: supabase db reset --local
+
+      - name: Run pgTAP tests
+        run: supabase test db --local
+
+      - name: Lint database
+        run: >
+          supabase db lint
+          --local
+          --schema public,private
+          --fail-on error
+
+      - name: Stop local database
+        if: always()
+        run: supabase stop --no-backup

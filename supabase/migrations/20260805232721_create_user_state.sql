@@ -27,13 +27,21 @@ comment on column public.user_state.schema_version is
 comment on column public.user_state.revision is
   'Revisão incremental controlada pelo banco de dados.';
 
-create function private.prepare_user_state_update()
+create function private.prepare_user_state_write()
 returns trigger
 language plpgsql
 security invoker
 set search_path = pg_catalog, private
 as $$
 begin
+  if tg_op = 'INSERT' then
+    new.revision := 1;
+    new.created_at := now();
+    new.updated_at := new.created_at;
+
+    return new;
+  end if;
+
   new.user_id := old.user_id;
   new.created_at := old.created_at;
   new.updated_at := now();
@@ -43,13 +51,13 @@ begin
 end;
 $$;
 
-revoke all on function private.prepare_user_state_update()
+revoke all on function private.prepare_user_state_write()
   from public, anon, authenticated;
 
-create trigger prepare_user_state_update
-before update on public.user_state
+create trigger prepare_user_state_write
+before insert or update on public.user_state
 for each row
-execute function private.prepare_user_state_update();
+execute function private.prepare_user_state_write();
 
 revoke all on table public.user_state
   from public, anon, authenticated;

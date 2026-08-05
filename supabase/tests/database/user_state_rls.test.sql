@@ -1,6 +1,6 @@
 begin;
 
-select plan(37);
+select plan(45);
 
 select has_table(
   'public',
@@ -60,6 +60,22 @@ select policy_roles_are(
   array['authenticated'],
   'DELETE é restrito a authenticated'
 );
+select policy_cmd_is(
+  'public', 'user_state', 'user_state_select_own', 'SELECT',
+  'user_state_select_own executa SELECT'
+);
+select policy_cmd_is(
+  'public', 'user_state', 'user_state_insert_own', 'INSERT',
+  'user_state_insert_own executa INSERT'
+);
+select policy_cmd_is(
+  'public', 'user_state', 'user_state_update_own', 'UPDATE',
+  'user_state_update_own executa UPDATE'
+);
+select policy_cmd_is(
+  'public', 'user_state', 'user_state_delete_own', 'DELETE',
+  'user_state_delete_own executa DELETE'
+);
 
 select ok(
   not has_table_privilege('anon', 'public.user_state', 'SELECT'),
@@ -111,15 +127,31 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 select lives_ok(
   $$
     insert into public.user_state (
-      user_id, state_data, created_at, updated_at
+      user_id, state_data, revision, created_at, updated_at
     ) values (
       '11111111-1111-4111-8111-111111111111',
       '{"owner":"user1"}'::jsonb,
+      99,
       '2020-01-01 00:00:00+00',
-      '2020-01-01 00:00:00+00'
+      '2040-01-01 00:00:00+00'
     )
   $$,
   'usuário 1 insere a própria linha'
+);
+select is(
+  (select revision from public.user_state),
+  1::bigint,
+  'revision do INSERT é controlada pelo banco'
+);
+select isnt(
+  (select created_at from public.user_state),
+  '2020-01-01 00:00:00+00'::timestamptz,
+  'created_at do INSERT ignora o valor do cliente'
+);
+select isnt(
+  (select updated_at from public.user_state),
+  '2040-01-01 00:00:00+00'::timestamptz,
+  'updated_at do INSERT ignora o valor do cliente'
 );
 select throws_like(
   $$
@@ -193,6 +225,13 @@ select throws_like(
 );
 
 reset role;
+create temporary table user1_metadata_before
+on commit drop
+as
+select created_at
+from public.user_state
+where user_id = '11111111-1111-4111-8111-111111111111';
+
 set local role authenticated;
 select set_config(
   'request.jwt.claim.sub',
@@ -205,6 +244,7 @@ select lives_ok(
     set state_data = '{"updated":true}'::jsonb,
         revision = 99,
         created_at = '2030-01-01 00:00:00+00',
+        updated_at = '2040-01-01 00:00:00+00',
         user_id = '22222222-2222-4222-8222-222222222222'
     where user_id = '11111111-1111-4111-8111-111111111111'
   $$,
@@ -216,19 +256,24 @@ select is(
   'revision aumenta exatamente uma unidade'
 );
 select ok(
-  (select updated_at > '2020-01-01 00:00:00+00'::timestamptz
+  (select updated_at <> '2040-01-01 00:00:00+00'::timestamptz
    from public.user_state),
-  'updated_at é atualizado pelo banco'
+  'updated_at do UPDATE ignora o valor do cliente'
 );
 select is(
   (select created_at from public.user_state),
-  '2020-01-01 00:00:00+00'::timestamptz,
+  (select created_at from user1_metadata_before),
   'created_at não pode ser reescrito'
 );
 select is(
   (select user_id from public.user_state),
   '11111111-1111-4111-8111-111111111111'::uuid,
   'user_id não pode ser trocado'
+);
+select is(
+  (select state_data from public.user_state),
+  '{"updated":true}'::jsonb,
+  'state_data é atualizado normalmente'
 );
 
 select set_config(
