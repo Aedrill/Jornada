@@ -8,6 +8,7 @@ import {
   waitFor,
 } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { AuthProvider } from '../auth/AuthContext'
 import NowPage from './NowPage'
 
 afterEach(cleanup)
@@ -16,9 +17,17 @@ beforeEach(() => {
   window.localStorage.clear()
 })
 
+function renderNowPage() {
+  render(
+    <AuthProvider>
+      <NowPage />
+    </AuthProvider>,
+  )
+}
+
 describe('navegação de NowPage', () => {
   it('começa nas boas-vindas e mostra a navegação depois', () => {
-    render(<NowPage />)
+    renderNowPage()
 
     expect(
       screen.getByRole('heading', { name: 'NORTE', level: 1 }),
@@ -46,7 +55,7 @@ describe('navegação de NowPage', () => {
   })
 
   it('separa a proteção dos dados do check-in', () => {
-    render(<NowPage />)
+    renderNowPage()
     fireEvent.click(
       screen.getByRole('button', { name: 'Começar meu dia' }),
     )
@@ -81,7 +90,7 @@ describe('navegação de NowPage', () => {
   })
 
   it('não altera o armazenamento apenas ao navegar', async () => {
-    render(<NowPage />)
+    renderNowPage()
 
     await waitFor(() => {
       expect(window.localStorage.length).toBeGreaterThan(0)
