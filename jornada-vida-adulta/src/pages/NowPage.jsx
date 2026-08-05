@@ -83,7 +83,10 @@ function NowPage() {
     [],
   )
   const [activeFocusSession, setActiveFocusSession] =
-    useState(null)
+    useLocalStorageState(
+      'jornada:v2:active-focus-session',
+      null,
+    )
   const [rescueMissionId, setRescueMissionId] =
     useState(null)
   const [focusSessions, setFocusSessions] =
@@ -497,11 +500,16 @@ function NowPage() {
   }
 
   function handleStartFocus(mission) {
+    const startedAt = new Date().toISOString()
+
     setActiveFocusSession({
       id: createId(),
       missionId: mission.id,
       plannedMinutes: 5,
-      startedAt: new Date().toISOString(),
+      startedAt,
+      remainingSeconds: 5 * 60,
+      isTimerRunning: true,
+      lastTimerStartedAt: startedAt,
     })
   }
 
@@ -530,9 +538,20 @@ function NowPage() {
     )
     const completedMission = outcome === 'completed'
 
+    const {
+      remainingSeconds,
+      isTimerRunning,
+      lastTimerStartedAt,
+      ...sessionRecord
+    } = activeFocusSession
+
+    void remainingSeconds
+    void isTimerRunning
+    void lastTimerStartedAt
+
     setFocusSessions((currentSessions) => [
       {
-        ...activeFocusSession,
+        ...sessionRecord,
         outcome,
         continuationNote,
         parkedThoughts,
@@ -569,11 +588,16 @@ function NowPage() {
       return
     }
 
+    const startedAt = new Date().toISOString()
+
     setActiveFocusSession({
       id: createId(),
       missionId: rescueMission.id,
       plannedMinutes: 2,
-      startedAt: new Date().toISOString(),
+      startedAt,
+      remainingSeconds: 2 * 60,
+      isTimerRunning: true,
+      lastTimerStartedAt: startedAt,
       source: 'rescue',
       rescueReason,
     })
@@ -597,7 +621,8 @@ function NowPage() {
     return (
       <FocusMode
         mission={activeFocusMission}
-        plannedMinutes={activeFocusSession.plannedMinutes}
+        session={activeFocusSession}
+        onUpdateSession={setActiveFocusSession}
         onExit={handleExitFocus}
       />
     )

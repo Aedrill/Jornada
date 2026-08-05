@@ -3,7 +3,12 @@ import { createId } from '../utils/createId'
 import FocusTimer from './FocusTimer'
 import ThoughtParkingLot from './ThoughtParkingLot'
 
-function FocusMode({ mission, plannedMinutes, onExit }) {
+function FocusMode({
+  mission,
+  session,
+  onUpdateSession,
+  onExit,
+}) {
   const [continuationNote, setContinuationNote] = useState(
     mission.continuationNote ?? '',
   )
@@ -51,7 +56,10 @@ function FocusMode({ mission, plannedMinutes, onExit }) {
         <p>{mission.nextAction}</p>
       </section>
 
-      <FocusTimer plannedMinutes={plannedMinutes} />
+      <FocusTimer
+        session={session}
+        onUpdateSession={onUpdateSession}
+      />
 
       <ThoughtParkingLot
         thoughts={parkedThoughts}

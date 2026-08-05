@@ -1,28 +1,51 @@
 import { useEffect, useState } from 'react'
+import { getRemainingSeconds } from '../utils/focusTimer'
 
-function FocusTimer({ plannedMinutes }) {
-  const totalSeconds = plannedMinutes * 60
+function FocusTimer({ session, onUpdateSession }) {
+  const totalSeconds = session.plannedMinutes * 60
 
   const [remainingSeconds, setRemainingSeconds] = useState(
-    () => totalSeconds,
+    () => getRemainingSeconds(session),
   )
-  const [isRunning, setIsRunning] = useState(true)
 
   useEffect(() => {
-    if (!isRunning || remainingSeconds === 0) {
+    function updateDisplayedTime() {
+      const currentRemainingSeconds =
+        getRemainingSeconds(session)
+
+      setRemainingSeconds(currentRemainingSeconds)
+
+      if (
+        session.isTimerRunning &&
+        currentRemainingSeconds === 0
+      ) {
+        onUpdateSession((currentSession) => ({
+          ...currentSession,
+          remainingSeconds: 0,
+          isTimerRunning: false,
+          lastTimerStartedAt: null,
+        }))
+      }
+    }
+
+    updateDisplayedTime()
+
+    if (
+      !session.isTimerRunning ||
+      getRemainingSeconds(session) === 0
+    ) {
       return undefined
     }
 
-    const intervalId = window.setInterval(() => {
-      setRemainingSeconds((currentSeconds) =>
-        Math.max(currentSeconds - 1, 0),
-      )
-    }, 1000)
+    const intervalId = window.setInterval(
+      updateDisplayedTime,
+      1000,
+    )
 
     return () => {
       window.clearInterval(intervalId)
     }
-  }, [isRunning, remainingSeconds])
+  }, [onUpdateSession, session])
 
   const minutes = Math.floor(remainingSeconds / 60)
   const seconds = remainingSeconds % 60
@@ -39,7 +62,25 @@ function FocusTimer({ plannedMinutes }) {
       return
     }
 
-    setIsRunning((currentValue) => !currentValue)
+    if (session.isTimerRunning) {
+      const currentRemainingSeconds =
+        getRemainingSeconds(session)
+
+      setRemainingSeconds(currentRemainingSeconds)
+      onUpdateSession((currentSession) => ({
+        ...currentSession,
+        remainingSeconds: currentRemainingSeconds,
+        isTimerRunning: false,
+        lastTimerStartedAt: null,
+      }))
+      return
+    }
+
+    onUpdateSession((currentSession) => ({
+      ...currentSession,
+      isTimerRunning: true,
+      lastTimerStartedAt: new Date().toISOString(),
+    }))
   }
 
   return (
@@ -61,7 +102,7 @@ function FocusTimer({ plannedMinutes }) {
 
       {!isFinished && (
         <button type="button" onClick={handleToggleTimer}>
-          {isRunning ? 'Pausar' : 'Continuar'}
+          {session.isTimerRunning ? 'Pausar' : 'Continuar'}
         </button>
       )}
 
