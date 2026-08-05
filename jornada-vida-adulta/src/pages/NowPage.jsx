@@ -12,6 +12,7 @@ import FocusMode from '../components/FocusMode'
 import MissionCard from '../components/MissionCard'
 import QuickCapture from '../components/QuickCapture'
 import RescueMode from '../components/RescueMode'
+import WelcomeScreen from '../components/WelcomeScreen'
 import useLocalStorageState from '../hooks/useLocalStorageState'
 import { createId } from '../utils/createId'
 import { getLocalDateKey } from '../utils/dateKey'
@@ -65,6 +66,7 @@ function NowPage() {
   const todayKey = getLocalDateKey()
 
   const [energy, setEnergy] = useState('')
+  const [hasEnteredApp, setHasEnteredApp] = useState(false)
   const [availableMinutes, setAvailableMinutes] = useState(null)
   const [isCheckInConfirmed, setIsCheckInConfirmed] = useState(false)
   const [isMissionListOpen, setIsMissionListOpen] =
@@ -643,9 +645,23 @@ function NowPage() {
     )
   }
 
+  if (!hasEnteredApp) {
+    return (
+      <WelcomeScreen
+        onContinue={() => setHasEnteredApp(true)}
+      />
+    )
+  }
+
   return (
     <main className="now-checkin-page">
-      <h1>Agora</h1>
+      <header className="norte-checkin-header">
+        <p className="norte-wordmark">NORTE</p>
+        <h1>Foque no Agora</h1>
+        <p className="checkin-subtitle">
+          Responda só o que importa para este momento.
+        </p>
+      </header>
 
       <EnergyCheckIn
         value={energy}
@@ -658,11 +674,12 @@ function NowPage() {
       />
 
       <button
+        className="prepare-missions-button"
         type="button"
         disabled={!canConfirmCheckIn}
         onClick={handleConfirmCheckIn}
       >
-        Preparar minhas missões
+        Encontrar meu próximo passo
       </button>
 
       {isCheckInConfirmed && (
