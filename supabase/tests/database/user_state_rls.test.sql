@@ -334,6 +334,10 @@ select throws_like(
   '%user_state_schema_version_positive%',
   'schema_version menor que 1 é rejeitada'
 );
+
+reset role;
+alter table public.user_state
+  disable trigger prepare_user_state_write;
 select throws_like(
   $$
     insert into public.user_state (user_id, revision)
@@ -342,8 +346,9 @@ select throws_like(
   '%user_state_revision_positive%',
   'revision menor que 1 é rejeitada'
 );
+alter table public.user_state
+  enable trigger prepare_user_state_write;
 
-reset role;
 delete from auth.users
 where id = '11111111-1111-4111-8111-111111111111';
 select is(
