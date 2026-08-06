@@ -14,10 +14,12 @@ import {
   getUserState,
 } from '../services/userStateService'
 import {
+  createBackupPayload,
   createCanonicalBackupSnapshot,
   downloadBackupPayload,
 } from '../utils/dataBackup'
 import CloudMigration from './CloudMigration'
+import { SYNC_STATE_KEY, createSyncReference } from '../utils/syncState'
 
 vi.mock('../auth/AuthContext', () => ({
   useAuth: vi.fn(),
@@ -64,6 +66,7 @@ const existingRow = {
   revision: 2,
   createdAt: '2026-08-05T12:00:00.000Z',
   updatedAt: '2026-08-05T13:00:00.000Z',
+  stateData: createBackupPayload({ ...props, exportedAt: '2026-08-05T12:00:00.000Z' }),
 }
 
 function connectedAuth() {
@@ -98,6 +101,20 @@ async function prepareConfirmation() {
   )
 }
 
+async function startComparison(remote = existingRow, renderProps = props) {
+  getUserState.mockResolvedValue(remote)
+  const view = render(<CloudMigration {...renderProps} />)
+  fireEvent.click(screen.getByRole('button', { name: 'Verificar meu cofre' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'Comparar este dispositivo com o cofre' }))
+  return view
+}
+
+function storeReference(remote = existingRow) {
+  const reference = createSyncReference(user.id, remote, '2026-08-05T14:00:00.000Z')
+  localStorage.setItem(SYNC_STATE_KEY, JSON.stringify(reference))
+  return reference
+}
+
 describe('CloudMigration', () => {
   beforeEach(() => {
     useAuth.mockReturnValue(connectedAuth())
@@ -114,7 +131,10 @@ describe('CloudMigration', () => {
     window.localStorage.clear()
   })
 
-  afterEach(cleanup)
+  afterEach(() => {
+    vi.useRealTimers()
+    cleanup()
+  })
 
   it('sem conta não consulta o serviço', () => {
     useAuth.mockReturnValue({
@@ -171,6 +191,215 @@ describe('CloudMigration', () => {
     expect(window.localStorage.getItem('jornada:v2:missions')).toBe(
       JSON.stringify(props.missions),
     )
+  })
+
+  it('vincula o dispositivo quando a primeira comparação é igual', async () => {
+    getUserState.mockResolvedValue(existingRow)
+    render(<CloudMigration {...props} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Verificar meu cofre' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Comparar este dispositivo com o cofre' }))
+
+    expect(await screen.findByText('Tudo em dia')).toBeTruthy()
+    expect(JSON.parse(localStorage.getItem('jornada:v2:sync-state'))).toMatchObject({
+      userId: user.id,
+      baseRevision: 2,
+    })
+  })
+
+  it('não vincula quando as cópias diferem e não expõe textos', async () => {
+    getUserState.mockResolvedValue({
+      ...existingRow,
+      stateData: createBackupPayload({ ...props, captures: [], exportedAt: existingRow.stateData.exportedAt }),
+    })
+    render(<CloudMigration {...props} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Verificar meu cofre' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Comparar este dispositivo com o cofre' }))
+
+    expect(await screen.findByText('Este dispositivo ainda não está vinculado')).toBeTruthy()
+    expect(localStorage.getItem('jornada:v2:sync-state')).toBeNull()
+  })
+
+  it('mostra in_sync com referência existente', async () => {
+    storeReference()
+    await startComparison()
+    expect(await screen.findByText('Tudo em dia')).toBeTruthy()
+    expect(screen.getByText('Este dispositivo e o cofre possuem a mesma versão.')).toBeTruthy()
+  })
+
+  it('em in_sync atualiza somente lastCheckedAt', async () => {
+    const before = storeReference()
+    await startComparison()
+    await screen.findByText('Tudo em dia')
+    const after = JSON.parse(localStorage.getItem(SYNC_STATE_KEY))
+    expect(after.lastCheckedAt).not.toBe(before.lastCheckedAt)
+    expect(after).toMatchObject({
+      linkedAt: before.linkedAt,
+      baseRevision: before.baseRevision,
+      baseSnapshot: before.baseSnapshot,
+    })
+  })
+
+  it.each([
+    ['local_ahead', { ...props, captures: [...props.captures, { id: 'nova' }] }, existingRow, 'Há alterações neste dispositivo', 'Nada foi enviado. Seus dados locais continuam preservados.'],
+    ['remote_ahead', props, { ...existingRow, revision: 3 }, 'Há uma versão mais recente no cofre', 'Nada foi baixado ou substituído.'],
+    ['conflict', { ...props, captures: [...props.captures, { id: 'nova' }] }, { ...existingRow, revision: 3 }, 'Os dois lados possuem alterações', 'Nenhuma versão foi substituída. A escolha será feita em uma próxima etapa.'],
+  ])('%s preserva a referência e mostra a mensagem segura', async (_status, localProps, remote, title, message) => {
+    const before = storeReference()
+    await startComparison(remote, localProps)
+    expect(await screen.findByText(title)).toBeTruthy()
+    expect(screen.getByText(message)).toBeTruthy()
+    expect(JSON.parse(localStorage.getItem(SYNC_STATE_KEY))).toEqual(before)
+  })
+
+  it('clique duplo cria somente uma consulta de comparação', async () => {
+    let resolveComparison
+    getUserState.mockResolvedValueOnce(existingRow).mockReturnValueOnce(
+      new Promise((resolve) => { resolveComparison = resolve }),
+    )
+    render(<CloudMigration {...props} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Verificar meu cofre' }))
+    const button = await screen.findByRole('button', { name: 'Comparar este dispositivo com o cofre' })
+    fireEvent.click(button)
+    fireEvent.click(button)
+    expect(getUserState).toHaveBeenCalledTimes(2)
+    resolveComparison(existingRow)
+    await screen.findByText('Tudo em dia')
+  })
+
+  it('troca de conta durante comparação descarta a resposta', async () => {
+    let resolveComparison
+    getUserState.mockResolvedValueOnce(existingRow).mockReturnValueOnce(
+      new Promise((resolve) => { resolveComparison = resolve }),
+    )
+    const { rerender } = render(<CloudMigration {...props} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Verificar meu cofre' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Comparar este dispositivo com o cofre' }))
+    useAuth.mockReturnValue({ ...connectedAuth(), user: { ...user, id: '22222222-2222-4222-8222-222222222222' } })
+    rerender(<CloudMigration {...props} />)
+    resolveComparison(existingRow)
+    await waitFor(() => expect(screen.queryByText('Tudo em dia')).toBeNull())
+    expect(localStorage.getItem(SYNC_STATE_KEY)).toBeNull()
+  })
+
+  it('desmontagem durante comparação descarta a resposta', async () => {
+    let resolveComparison
+    getUserState.mockResolvedValueOnce(existingRow).mockReturnValueOnce(
+      new Promise((resolve) => { resolveComparison = resolve }),
+    )
+    const { unmount } = render(<CloudMigration {...props} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Verificar meu cofre' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Comparar este dispositivo com o cofre' }))
+    unmount()
+    resolveComparison(existingRow)
+    await Promise.resolve()
+    expect(localStorage.getItem(SYNC_STATE_KEY)).toBeNull()
+  })
+
+  it('erro de rede não altera sync-state', async () => {
+    const before = storeReference()
+    getUserState.mockResolvedValueOnce(existingRow).mockRejectedValueOnce(new TypeError('offline'))
+    render(<CloudMigration {...props} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Verificar meu cofre' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Comparar este dispositivo com o cofre' }))
+    expect(await screen.findByRole('alert')).toBeTruthy()
+    expect(JSON.parse(localStorage.getItem(SYNC_STATE_KEY))).toEqual(before)
+  })
+
+  it('resultado anterior desaparece quando começa uma nova comparação', async () => {
+    await startComparison()
+    await screen.findByText('Tudo em dia')
+    let resolveComparison
+    getUserState.mockReturnValueOnce(new Promise((resolve) => { resolveComparison = resolve }))
+    fireEvent.click(screen.getByRole('button', { name: 'Comparar este dispositivo com o cofre' }))
+    expect(screen.queryByText('Tudo em dia')).toBeNull()
+    resolveComparison(existingRow)
+    await screen.findByText('Tudo em dia')
+  })
+
+  it('erro de rede remove o status de comparação', async () => {
+    getUserState.mockResolvedValueOnce(existingRow).mockRejectedValueOnce(new TypeError('offline'))
+    render(<CloudMigration {...props} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Verificar meu cofre' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Comparar este dispositivo com o cofre' }))
+    expect(await screen.findByRole('alert')).toBeTruthy()
+    expect(screen.queryByText('Comparando com segurança...')).toBeNull()
+  })
+
+  it('erro não mantém diagnóstico anterior', async () => {
+    await startComparison()
+    await screen.findByText('Tudo em dia')
+    getUserState.mockRejectedValueOnce(new TypeError('offline'))
+    fireEvent.click(screen.getByRole('button', { name: 'Comparar este dispositivo com o cofre' }))
+    expect(await screen.findByRole('alert')).toBeTruthy()
+    expect(screen.queryByText('Tudo em dia')).toBeNull()
+    expect(screen.queryByText('Este dispositivo e o cofre possuem a mesma versão.')).toBeNull()
+  })
+
+  it('falha de localStorage não mantém resultado anterior', async () => {
+    await startComparison()
+    await screen.findByText('Tudo em dia')
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('storage unavailable')
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Comparar este dispositivo com o cofre' }))
+    expect(await screen.findByRole('alert')).toBeTruthy()
+    expect(screen.queryByText('Tudo em dia')).toBeNull()
+    setItemSpy.mockRestore()
+  })
+
+  it.each([
+    ['snapshot remoto inválido', { ...existingRow, stateData: { invalid: true } }],
+    ['userId remoto divergente', { ...existingRow, userId: '22222222-2222-4222-8222-222222222222' }],
+    ['schemaVersion remoto divergente', { ...existingRow, schemaVersion: 2 }],
+  ])('%s não altera sync-state', async (_label, remote) => {
+    const before = storeReference()
+    await startComparison(remote)
+    expect(await screen.findByRole('alert')).toBeTruthy()
+    expect(JSON.parse(localStorage.getItem(SYNC_STATE_KEY))).toEqual(before)
+  })
+
+  it('falha de localStorage não altera dados funcionais', async () => {
+    const functionalState = {
+      'jornada:v2:captures': '[{"id":"capture-local"}]',
+      'jornada:v2:missions': '[{"id":"mission-local"}]',
+      'jornada:v2:active-focus-session': 'null',
+      'jornada:v2:focus-sessions': '[]',
+      'jornada:v2:daily-plan': '{"dateKey":"2026-08-05"}',
+    }
+    Object.entries(functionalState).forEach(([key, value]) => localStorage.setItem(key, value))
+    const originalSetItem = Storage.prototype.setItem
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (key, value) {
+      if (key === SYNC_STATE_KEY) throw new Error('storage unavailable')
+      return originalSetItem.call(this, key, value)
+    })
+    await startComparison()
+    expect(await screen.findByRole('alert')).toBeTruthy()
+    expect(Object.fromEntries(Object.keys(functionalState).map((key) => [key, localStorage.getItem(key)]))).toEqual(functionalState)
+    setItemSpy.mockRestore()
+  })
+
+  it('diagnóstico preserva as cinco chaves e nunca chama createInitialUserState', async () => {
+    const keys = [
+      'jornada:v2:captures', 'jornada:v2:missions', 'jornada:v2:active-focus-session',
+      'jornada:v2:focus-sessions', 'jornada:v2:daily-plan',
+    ]
+    keys.forEach((key, index) => localStorage.setItem(key, `valor-${index}`))
+    await startComparison()
+    await screen.findByText('Tudo em dia')
+    expect(keys.map((key) => localStorage.getItem(key))).toEqual(keys.map((_key, index) => `valor-${index}`))
+    expect(createInitialUserState).not.toHaveBeenCalled()
+  })
+
+  it('resumo local mantém exportedAt atual sem receber a normalização da comparação', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    vi.setSystemTime(new Date('2026-08-06T15:30:00.000Z'))
+    storeReference()
+    await startComparison()
+    await screen.findByText('Tudo em dia')
+    expect(screen.getByText(`Snapshot criado em: ${new Date('2026-08-06T15:30:00.000Z').toLocaleString('pt-BR')}`)).toBeTruthy()
+    const snapshotDates = createCanonicalBackupSnapshot.mock.calls.map(([value]) => value?.exportedAt)
+    expect(snapshotDates).toContain(existingRow.stateData.exportedAt)
+    expect(snapshotDates.some((date) => date !== existingRow.stateData.exportedAt)).toBe(true)
   })
 
   it('cofre vazio cria prévia com todas as quantidades', async () => {

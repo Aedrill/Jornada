@@ -10,24 +10,22 @@ import {
   createBackupPayload,
   downloadBackupPayload,
 } from '../utils/dataBackup'
+import { areJsonValuesEqual } from '../utils/jsonEquality'
+import {
+  SYNC_STATE_KEY,
+  classifySyncState,
+  createSnapshotSummary,
+  createSyncReference,
+  readSyncState,
+  validateRemoteSyncRow,
+} from '../utils/syncState'
 
-function createSnapshotSummary(snapshot) {
-  const { data } = snapshot
-
-  return {
-    captures: data.captures.length,
-    missions: data.missions.length,
-    activeMissions: data.missions.filter(
-      ({ status }) => status === 'active',
-    ).length,
-    completedMissions: data.missions.filter(
-      ({ status }) => status === 'completed',
-    ).length,
-    focusSessions: data.focusSessions.length,
-    hasActiveFocus: Boolean(data.activeFocusSession),
-    dailyPlanDate: data.dailyPlan.dateKey || 'Não informado',
-    schemaVersion: snapshot.schemaVersion,
-  }
+const COMPARISON_COPY = {
+  in_sync: ['Tudo em dia', 'Este dispositivo e o cofre possuem a mesma versão.'],
+  local_ahead: ['Há alterações neste dispositivo', 'Nada foi enviado. Seus dados locais continuam preservados.'],
+  remote_ahead: ['Há uma versão mais recente no cofre', 'Nada foi baixado ou substituído.'],
+  conflict: ['Os dois lados possuem alterações', 'Nenhuma versão foi substituída. A escolha será feita em uma próxima etapa.'],
+  unlinked_difference: ['Este dispositivo ainda não está vinculado', 'Os dados deste dispositivo são diferentes do cofre. Nenhuma alteração foi realizada.'],
 }
 
 function CloudMigrationContent({
@@ -49,6 +47,7 @@ function CloudMigrationContent({
   const [isBusy, setIsBusy] = useState(false)
   const [statusMessage, setStatusMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+  const [comparisonResult, setComparisonResult] = useState(null)
   const requestIdRef = useRef(0)
   const currentUserIdRef = useRef(user?.id ?? null)
   const busyRef = useRef(false)
@@ -93,6 +92,7 @@ function CloudMigrationContent({
     setIsBusy(true)
     setErrorMessage('')
     setStatusMessage('')
+    setComparisonResult(null)
 
     return {
       id: ++requestIdRef.current,
@@ -157,6 +157,77 @@ function CloudMigrationContent({
       }
     } catch (error) {
       if (isCurrentRequest(request)) {
+        setStatusMessage('')
+        setErrorMessage(getUserStateErrorMessage(error))
+      }
+    } finally {
+      finishRequest(request)
+    }
+  }
+
+  async function handleCompare() {
+    const request = beginRequest()
+    if (!request?.userId) return
+
+    setStatusMessage('Comparando com segurança...')
+
+    try {
+      const reference = readSyncState(request.userId)
+      const remote = await getUserState(request.userId)
+      if (!isCurrentRequest(request)) return
+      const validatedRemote = validateRemoteSyncRow(remote, request.userId)
+      const remoteSnapshot = validatedRemote.stateData
+
+      const comparisonExportedAt = reference?.baseSnapshot.exportedAt || remoteSnapshot.exportedAt
+      const localDisplaySnapshot = createCanonicalBackupSnapshot(createBackupPayload({
+        captures,
+        missions,
+        activeFocusSession,
+        focusSessions,
+        dailyPlan,
+      }))
+      const localComparisonSnapshot = createCanonicalBackupSnapshot(createBackupPayload({
+        captures: localDisplaySnapshot.data.captures,
+        missions: localDisplaySnapshot.data.missions,
+        activeFocusSession: localDisplaySnapshot.data.activeFocusSession,
+        focusSessions: localDisplaySnapshot.data.focusSessions,
+        dailyPlan: localDisplaySnapshot.data.dailyPlan,
+        exportedAt: comparisonExportedAt,
+      }))
+      const checkedAt = new Date().toISOString()
+      let status
+
+      if (!reference) {
+        if (areJsonValuesEqual(localComparisonSnapshot, remoteSnapshot)) {
+          const nextReference = createSyncReference(request.userId, validatedRemote, checkedAt)
+          globalThis.localStorage.setItem(SYNC_STATE_KEY, JSON.stringify(nextReference))
+          status = 'in_sync'
+        } else {
+          status = 'unlinked_difference'
+        }
+      } else {
+        status = classifySyncState(localComparisonSnapshot, validatedRemote, reference)
+        if (status === 'in_sync') {
+          globalThis.localStorage.setItem(SYNC_STATE_KEY, JSON.stringify({
+            ...reference,
+            lastCheckedAt: checkedAt,
+          }))
+        }
+      }
+
+      if (!isCurrentRequest(request)) return
+      setComparisonResult({
+        status,
+        local: createSnapshotSummary(localDisplaySnapshot),
+        remote: createSnapshotSummary(remoteSnapshot),
+      })
+      setStatusMessage(status === 'in_sync' && !reference
+        ? 'Este dispositivo está vinculado e tudo está em dia'
+        : '')
+    } catch (error) {
+      if (isCurrentRequest(request)) {
+        setStatusMessage('')
+        setComparisonResult(null)
         setErrorMessage(getUserStateErrorMessage(error))
       }
     } finally {
@@ -317,9 +388,22 @@ function CloudMigrationContent({
             </ul>
           )}
           <p>
-            Nada foi alterado. A leitura e a sincronização serão
-            tratadas em uma etapa futura.
+            Nada foi alterado.
           </p>
+          <button type="button" disabled={isBusy} onClick={handleCompare}>
+            {isBusy ? 'Comparando com segurança...' : 'Comparar este dispositivo com o cofre'}
+          </button>
+        </div>
+      )}
+
+      {comparisonResult && (
+        <div className="cloud-result" aria-live="polite">
+          <h3>{COMPARISON_COPY[comparisonResult.status][0]}</h3>
+          <p>{COMPARISON_COPY[comparisonResult.status][1]}</p>
+          <div className="cloud-comparison-summaries">
+            <SnapshotSummary title="Neste dispositivo" summary={comparisonResult.local} />
+            <SnapshotSummary title="No cofre" summary={comparisonResult.remote} />
+          </div>
         </div>
       )}
 
@@ -438,6 +522,25 @@ function CloudMigrationContent({
           {errorMessage}
         </p>
       )}
+    </section>
+  )
+}
+
+function SnapshotSummary({ title, summary }) {
+  return (
+    <section aria-label={title}>
+      <h4>{title}</h4>
+      <ul>
+        <li>Snapshot criado em: {new Date(summary.createdAt).toLocaleString('pt-BR')}</li>
+        <li>Capturas: {summary.captures}</li>
+        <li>Missões: {summary.missions}</li>
+        <li>Missões ativas: {summary.activeMissions}</li>
+        <li>Missões concluídas: {summary.completedMissions}</li>
+        <li>Sessões de foco: {summary.focusSessions}</li>
+        <li>Foco em andamento: {summary.hasActiveFocus ? 'Sim' : 'Não'}</li>
+        <li>Planejamento: {summary.dailyPlanDate}</li>
+        <li>Versão do backup: {summary.schemaVersion}</li>
+      </ul>
     </section>
   )
 }
