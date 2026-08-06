@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
-  createBackupFileName,
   createBackupPayload,
+  downloadBackupPayload,
   parseBackupText,
 } from '../utils/dataBackup'
 
@@ -20,6 +20,9 @@ function DataBackup({
     useState(false)
 
   function handleExport() {
+    setStatusMessage('')
+    setErrorMessage('')
+
     const payload = createBackupPayload({
       captures,
       missions,
@@ -28,26 +31,16 @@ function DataBackup({
       dailyPlan,
     })
 
-    const fileContent = JSON.stringify(payload, null, 2)
-    const fileBlob = new Blob(
-      [fileContent],
-      { type: 'application/json' },
-    )
-    const fileUrl = URL.createObjectURL(fileBlob)
-    const downloadLink = document.createElement('a')
-
-    downloadLink.href = fileUrl
-    downloadLink.download = createBackupFileName()
-
-    document.body.appendChild(downloadLink)
-    downloadLink.click()
-    downloadLink.remove()
-
-    URL.revokeObjectURL(fileUrl)
-
-    setStatusMessage(
-      'Backup criado. Guarde o arquivo em um lugar seguro.',
-    )
+    try {
+      downloadBackupPayload(payload)
+      setStatusMessage(
+        'Backup criado. Guarde o arquivo em um lugar seguro.',
+      )
+    } catch {
+      setErrorMessage(
+        'Não foi possível baixar o backup. Tente novamente.',
+      )
+    }
   }
 
   async function handleBackupFileChange(event) {

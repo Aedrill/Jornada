@@ -70,4 +70,27 @@ describe('DataProtectionPage', () => {
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy()
   })
+
+  it('apresenta conta, cópia na nuvem e backup nesta ordem', () => {
+    renderDataProtectionPage()
+
+    const accountTitle = screen.getByRole('heading', {
+      name: 'Sua conta',
+    })
+    const cloudTitle = screen.getByRole('heading', {
+      name: 'Cópia segura na nuvem',
+    })
+    const backupTitle = screen.getByRole('heading', {
+      name: 'Proteção dos seus dados',
+    })
+
+    expect(
+      accountTitle.compareDocumentPosition(cloudTitle) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+    expect(
+      cloudTitle.compareDocumentPosition(backupTitle) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+  })
 })

@@ -34,6 +34,39 @@ function isPlainObject(value) {
   )
 }
 
+function isJsonCompatible(value, seen = new WeakSet()) {
+  if (
+    value === null ||
+    typeof value === 'string' ||
+    typeof value === 'boolean'
+  ) {
+    return true
+  }
+
+  if (typeof value === 'number') {
+    return Number.isFinite(value)
+  }
+
+  if (typeof value !== 'object' || seen.has(value)) {
+    return false
+  }
+
+  if (!Array.isArray(value) && !isPlainObject(value)) {
+    return false
+  }
+
+  seen.add(value)
+  const entries = Array.isArray(value)
+    ? value
+    : Object.values(value)
+  const isCompatible = entries.every((entry) =>
+    isJsonCompatible(entry, seen),
+  )
+  seen.delete(value)
+
+  return isCompatible
+}
+
 export function validateBackupPayload(payload) {
   if (!isPlainObject(payload)) {
     return {
@@ -96,6 +129,29 @@ export function validateBackupPayload(payload) {
   return {
     isValid: true,
     error: '',
+  }
+}
+
+export function createCanonicalBackupSnapshot(payload) {
+  if (!validateBackupPayload(payload).isValid) {
+    throw new Error('canonical_backup_failed')
+  }
+
+  try {
+    if (!isJsonCompatible(payload)) {
+      throw new Error('non_json_value')
+    }
+
+    const serializedPayload = JSON.stringify(payload)
+    const snapshot = JSON.parse(serializedPayload)
+
+    if (!validateBackupPayload(snapshot).isValid) {
+      throw new Error('invalid_canonical_backup')
+    }
+
+    return snapshot
+  } catch {
+    throw new Error('canonical_backup_failed')
   }
 }
 
@@ -164,4 +220,52 @@ export function createBackupFileName(
   const minutes = String(date.getMinutes()).padStart(2, '0')
 
   return `jornada-backup-${year}-${month}-${day}-${hours}${minutes}.json`
+}
+
+export function downloadBackupPayload(
+  payload,
+  {
+    date = new Date(),
+    documentApi = globalThis.document,
+    urlApi = globalThis.URL,
+    BlobApi = globalThis.Blob,
+  } = {},
+) {
+  const validation = validateBackupPayload(payload)
+
+  if (!validation.isValid) {
+    throw new Error('invalid_backup_payload')
+  }
+
+  if (
+    !documentApi?.createElement ||
+    !documentApi?.body?.appendChild ||
+    typeof urlApi?.createObjectURL !== 'function' ||
+    typeof urlApi?.revokeObjectURL !== 'function' ||
+    typeof BlobApi !== 'function'
+  ) {
+    throw new Error('backup_download_unavailable')
+  }
+
+  const fileName = createBackupFileName(date)
+  const fileBlob = new BlobApi(
+    [JSON.stringify(payload, null, 2)],
+    { type: 'application/json' },
+  )
+  const fileUrl = urlApi.createObjectURL(fileBlob)
+  const downloadLink = documentApi.createElement('a')
+
+  try {
+    downloadLink.href = fileUrl
+    downloadLink.download = fileName
+    documentApi.body.appendChild(downloadLink)
+    downloadLink.click()
+    downloadLink.remove()
+  } catch {
+    throw new Error('backup_download_failed')
+  } finally {
+    urlApi.revokeObjectURL(fileUrl)
+  }
+
+  return fileName
 }
