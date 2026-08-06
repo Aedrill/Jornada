@@ -6,6 +6,7 @@ import {
   createSnapshotSummary,
   createSyncReference,
   readSyncState,
+  validateRemoteSyncRow,
 } from './syncState'
 
 const userId = '11111111-1111-4111-8111-111111111111'
@@ -47,5 +48,21 @@ describe('syncState', () => {
     const summary = createSnapshotSummary(snapshot([{ status: 'active', title: 'segredo' }]))
     expect(summary).toMatchObject({ missions: 1, activeMissions: 1, completedMissions: 0 })
     expect(JSON.stringify(summary)).not.toContain('segredo')
+  })
+
+  it.each([
+    ['usuário', { userId: 'outro', schemaVersion: 1, revision: 1, stateData: snapshot() }],
+    ['schema da linha', { userId, schemaVersion: 2, revision: 1, stateData: snapshot() }],
+    ['revisão', { userId, schemaVersion: 1, revision: 0, stateData: snapshot() }],
+    ['snapshot', { userId, schemaVersion: 1, revision: 1, stateData: { invalid: true } }],
+  ])('rejeita resposta remota com %s inválido', (_label, remote) => {
+    expect(() => validateRemoteSyncRow(remote, userId)).toThrow('invalid_remote_sync_row')
+  })
+
+  it('valida e devolve snapshot remoto canônico independente', () => {
+    const remote = { userId, schemaVersion: 1, revision: 1, stateData: snapshot() }
+    const validated = validateRemoteSyncRow(remote, userId)
+    expect(validated.stateData).toEqual(remote.stateData)
+    expect(validated.stateData).not.toBe(remote.stateData)
   })
 })

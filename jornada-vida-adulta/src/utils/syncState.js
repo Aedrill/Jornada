@@ -1,4 +1,8 @@
-import { createCanonicalBackupSnapshot, validateBackupPayload } from './dataBackup'
+import {
+  BACKUP_SCHEMA_VERSION,
+  createCanonicalBackupSnapshot,
+  validateBackupPayload,
+} from './dataBackup'
 import { areJsonValuesEqual } from './jsonEquality'
 
 export const SYNC_STATE_KEY = 'jornada:v2:sync-state'
@@ -42,6 +46,23 @@ export function createSyncReference(userId, remote, checkedAt = new Date().toISO
     linkedAt: checkedAt,
     lastCheckedAt: checkedAt,
   }
+}
+
+export function validateRemoteSyncRow(remote, expectedUserId) {
+  if (!remote || remote.userId !== expectedUserId ||
+      remote.schemaVersion !== BACKUP_SCHEMA_VERSION ||
+      !Number.isInteger(remote.revision) || remote.revision <= 0 ||
+      !validateBackupPayload(remote.stateData).isValid) {
+    throw new Error('invalid_remote_sync_row')
+  }
+
+  const snapshot = createCanonicalBackupSnapshot(remote.stateData)
+  if (remote.schemaVersion !== snapshot.schemaVersion ||
+      !areJsonValuesEqual(remote.stateData, snapshot)) {
+    throw new Error('invalid_remote_sync_row')
+  }
+
+  return { ...remote, stateData: snapshot }
 }
 
 export function classifySyncState(localSnapshot, remote, reference) {

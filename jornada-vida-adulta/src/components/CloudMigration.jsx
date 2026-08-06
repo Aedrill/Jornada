@@ -17,6 +17,7 @@ import {
   createSnapshotSummary,
   createSyncReference,
   readSyncState,
+  validateRemoteSyncRow,
 } from '../utils/syncState'
 
 const COMPARISON_COPY = {
@@ -172,35 +173,38 @@ function CloudMigrationContent({
       const reference = readSyncState(request.userId)
       const remote = await getUserState(request.userId)
       if (!isCurrentRequest(request)) return
-      if (!remote) throw new Error('invalid_response')
-
-      const remoteSnapshot = createCanonicalBackupSnapshot(remote.stateData)
-      if (!Number.isInteger(remote.revision) || remote.revision <= 0) {
-        throw new Error('invalid_response')
-      }
+      const validatedRemote = validateRemoteSyncRow(remote, request.userId)
+      const remoteSnapshot = validatedRemote.stateData
 
       const comparisonExportedAt = reference?.baseSnapshot.exportedAt || remoteSnapshot.exportedAt
-      const localSnapshot = createCanonicalBackupSnapshot(createBackupPayload({
+      const localDisplaySnapshot = createCanonicalBackupSnapshot(createBackupPayload({
         captures,
         missions,
         activeFocusSession,
         focusSessions,
         dailyPlan,
+      }))
+      const localComparisonSnapshot = createCanonicalBackupSnapshot(createBackupPayload({
+        captures: localDisplaySnapshot.data.captures,
+        missions: localDisplaySnapshot.data.missions,
+        activeFocusSession: localDisplaySnapshot.data.activeFocusSession,
+        focusSessions: localDisplaySnapshot.data.focusSessions,
+        dailyPlan: localDisplaySnapshot.data.dailyPlan,
         exportedAt: comparisonExportedAt,
       }))
       const checkedAt = new Date().toISOString()
       let status
 
       if (!reference) {
-        if (areJsonValuesEqual(localSnapshot, remoteSnapshot)) {
-          const nextReference = createSyncReference(request.userId, remote, checkedAt)
+        if (areJsonValuesEqual(localComparisonSnapshot, remoteSnapshot)) {
+          const nextReference = createSyncReference(request.userId, validatedRemote, checkedAt)
           globalThis.localStorage.setItem(SYNC_STATE_KEY, JSON.stringify(nextReference))
           status = 'in_sync'
         } else {
           status = 'unlinked_difference'
         }
       } else {
-        status = classifySyncState(localSnapshot, { ...remote, stateData: remoteSnapshot }, reference)
+        status = classifySyncState(localComparisonSnapshot, validatedRemote, reference)
         if (status === 'in_sync') {
           globalThis.localStorage.setItem(SYNC_STATE_KEY, JSON.stringify({
             ...reference,
@@ -212,7 +216,7 @@ function CloudMigrationContent({
       if (!isCurrentRequest(request)) return
       setComparisonResult({
         status,
-        local: createSnapshotSummary(localSnapshot),
+        local: createSnapshotSummary(localDisplaySnapshot),
         remote: createSnapshotSummary(remoteSnapshot),
       })
       setStatusMessage(status === 'in_sync' && !reference
