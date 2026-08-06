@@ -14,6 +14,7 @@ import {
   getUserState,
 } from '../services/userStateService'
 import {
+  createBackupPayload,
   createCanonicalBackupSnapshot,
   downloadBackupPayload,
 } from '../utils/dataBackup'
@@ -64,6 +65,7 @@ const existingRow = {
   revision: 2,
   createdAt: '2026-08-05T12:00:00.000Z',
   updatedAt: '2026-08-05T13:00:00.000Z',
+  stateData: createBackupPayload({ ...props, exportedAt: '2026-08-05T12:00:00.000Z' }),
 }
 
 function connectedAuth() {
@@ -171,6 +173,32 @@ describe('CloudMigration', () => {
     expect(window.localStorage.getItem('jornada:v2:missions')).toBe(
       JSON.stringify(props.missions),
     )
+  })
+
+  it('vincula o dispositivo quando a primeira comparação é igual', async () => {
+    getUserState.mockResolvedValue(existingRow)
+    render(<CloudMigration {...props} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Verificar meu cofre' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Comparar este dispositivo com o cofre' }))
+
+    expect(await screen.findByText('Tudo em dia')).toBeTruthy()
+    expect(JSON.parse(localStorage.getItem('jornada:v2:sync-state'))).toMatchObject({
+      userId: user.id,
+      baseRevision: 2,
+    })
+  })
+
+  it('não vincula quando as cópias diferem e não expõe textos', async () => {
+    getUserState.mockResolvedValue({
+      ...existingRow,
+      stateData: createBackupPayload({ ...props, captures: [], exportedAt: existingRow.stateData.exportedAt }),
+    })
+    render(<CloudMigration {...props} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Verificar meu cofre' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Comparar este dispositivo com o cofre' }))
+
+    expect(await screen.findByText('Este dispositivo ainda não está vinculado')).toBeTruthy()
+    expect(localStorage.getItem('jornada:v2:sync-state')).toBeNull()
   })
 
   it('cofre vazio cria prévia com todas as quantidades', async () => {
