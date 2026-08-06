@@ -25,7 +25,7 @@ describe('WelcomeScreen', () => {
 
     expect(
       screen.getByText(
-        'Uma jornada divertida e gentil pela vida adulta.',
+        'Uma jornada divertida e descomplicada pela vida adulta.',
       ),
     ).toBeTruthy()
   })

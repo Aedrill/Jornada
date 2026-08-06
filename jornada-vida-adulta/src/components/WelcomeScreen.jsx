@@ -14,7 +14,7 @@ function WelcomeScreen({ onContinue }) {
         </h1>
 
         <p className="welcome-tagline">
-          Uma jornada divertida e gentil pela vida adulta.
+          Uma jornada divertida e descomplicada pela vida adulta.
         </p>
 
         <button
