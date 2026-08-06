@@ -305,6 +305,48 @@ describe('CloudMigration', () => {
     expect(JSON.parse(localStorage.getItem(SYNC_STATE_KEY))).toEqual(before)
   })
 
+  it('resultado anterior desaparece quando começa uma nova comparação', async () => {
+    await startComparison()
+    await screen.findByText('Tudo em dia')
+    let resolveComparison
+    getUserState.mockReturnValueOnce(new Promise((resolve) => { resolveComparison = resolve }))
+    fireEvent.click(screen.getByRole('button', { name: 'Comparar este dispositivo com o cofre' }))
+    expect(screen.queryByText('Tudo em dia')).toBeNull()
+    resolveComparison(existingRow)
+    await screen.findByText('Tudo em dia')
+  })
+
+  it('erro de rede remove o status de comparação', async () => {
+    getUserState.mockResolvedValueOnce(existingRow).mockRejectedValueOnce(new TypeError('offline'))
+    render(<CloudMigration {...props} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Verificar meu cofre' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Comparar este dispositivo com o cofre' }))
+    expect(await screen.findByRole('alert')).toBeTruthy()
+    expect(screen.queryByText('Comparando com segurança...')).toBeNull()
+  })
+
+  it('erro não mantém diagnóstico anterior', async () => {
+    await startComparison()
+    await screen.findByText('Tudo em dia')
+    getUserState.mockRejectedValueOnce(new TypeError('offline'))
+    fireEvent.click(screen.getByRole('button', { name: 'Comparar este dispositivo com o cofre' }))
+    expect(await screen.findByRole('alert')).toBeTruthy()
+    expect(screen.queryByText('Tudo em dia')).toBeNull()
+    expect(screen.queryByText('Este dispositivo e o cofre possuem a mesma versão.')).toBeNull()
+  })
+
+  it('falha de localStorage não mantém resultado anterior', async () => {
+    await startComparison()
+    await screen.findByText('Tudo em dia')
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('storage unavailable')
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Comparar este dispositivo com o cofre' }))
+    expect(await screen.findByRole('alert')).toBeTruthy()
+    expect(screen.queryByText('Tudo em dia')).toBeNull()
+    setItemSpy.mockRestore()
+  })
+
   it.each([
     ['snapshot remoto inválido', { ...existingRow, stateData: { invalid: true } }],
     ['userId remoto divergente', { ...existingRow, userId: '22222222-2222-4222-8222-222222222222' }],

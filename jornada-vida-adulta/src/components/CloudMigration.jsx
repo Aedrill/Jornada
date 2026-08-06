@@ -92,6 +92,7 @@ function CloudMigrationContent({
     setIsBusy(true)
     setErrorMessage('')
     setStatusMessage('')
+    setComparisonResult(null)
 
     return {
       id: ++requestIdRef.current,
@@ -156,6 +157,7 @@ function CloudMigrationContent({
       }
     } catch (error) {
       if (isCurrentRequest(request)) {
+        setStatusMessage('')
         setErrorMessage(getUserStateErrorMessage(error))
       }
     } finally {
@@ -223,7 +225,11 @@ function CloudMigrationContent({
         ? 'Este dispositivo está vinculado e tudo está em dia'
         : '')
     } catch (error) {
-      if (isCurrentRequest(request)) setErrorMessage(getUserStateErrorMessage(error))
+      if (isCurrentRequest(request)) {
+        setStatusMessage('')
+        setComparisonResult(null)
+        setErrorMessage(getUserStateErrorMessage(error))
+      }
     } finally {
       finishRequest(request)
     }
