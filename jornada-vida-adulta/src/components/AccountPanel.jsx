@@ -110,9 +110,10 @@ function AccountPanel() {
           <h3>Conta conectada</h3>
           <p>{user.email}</p>
           <p className="account-notice">
-            Sua conta está pronta. A sincronização dos dados
-            será ativada na próxima etapa. Por enquanto, suas
-            informações continuam armazenadas neste dispositivo.
+            Sua conta está conectada. Em Meus dados, você pode
+            criar uma cópia inicial no cofre. A sincronização
+            automática ainda não existe, e sair da conta não
+            remove os dados deste dispositivo.
           </p>
           <button
             type="button"

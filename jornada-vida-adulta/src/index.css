@@ -605,3 +605,122 @@
     transition: none;
   }
 }
+
+.now-checkin-page > section.cloud-migration {
+  margin-top: 34px;
+  padding: 24px;
+  border: 1px solid #dfe6dd;
+  border-radius: 18px;
+  background: #fff;
+  text-align: left;
+}
+
+.now-checkin-page > section.cloud-migration > div {
+  width: 100%;
+  display: grid;
+  justify-content: stretch;
+  gap: 12px;
+  text-align: left;
+}
+
+.now-checkin-page > section.cloud-migration p {
+  line-height: 1.5;
+}
+
+.now-checkin-page > section.cloud-migration ul {
+  margin: 0;
+  padding-left: 22px;
+  display: grid;
+  gap: 7px;
+}
+
+.now-checkin-page > section.cloud-migration button {
+  min-height: 44px;
+  padding: 11px 18px;
+  border: 0;
+  border-radius: 11px;
+  color: #fff;
+  background: #275c4e;
+  font-weight: 700;
+}
+
+.now-checkin-page > section.cloud-migration
+  button:hover:not(:disabled) {
+  background: #1f4d41;
+}
+
+.now-checkin-page > section.cloud-migration
+  button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.now-checkin-page > section.cloud-migration
+  button:focus-visible,
+.now-checkin-page > section.cloud-migration
+  [tabindex="-1"]:focus-visible {
+  outline: 3px solid #a9c88f;
+  outline-offset: 2px;
+}
+
+.now-checkin-page > section.cloud-migration button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.now-checkin-page > section.cloud-migration
+  .secondary-button {
+  color: #40564d;
+  border: 1px solid #ccd8d1;
+  background: #fff;
+}
+
+.cloud-preview,
+.cloud-result,
+.cloud-confirmation,
+.cloud-notice {
+  padding: 16px;
+  border-radius: 12px;
+  background: #f3f5ef;
+}
+
+.cloud-success {
+  border: 1px solid #b9d1c5;
+  background: #edf7f1;
+}
+
+.now-checkin-page > section.cloud-migration
+  .cloud-actions {
+  display: flex;
+  justify-content: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.now-checkin-page > section.cloud-migration
+  .cloud-error {
+  color: #8b3f3f;
+  font-weight: 700;
+}
+
+@media (max-width: 560px) {
+  .now-checkin-page > section.cloud-migration {
+    padding: 20px;
+  }
+
+  .now-checkin-page > section.cloud-migration button,
+  .now-checkin-page > section.cloud-migration
+    .cloud-actions {
+    width: 100%;
+  }
+
+  .now-checkin-page > section.cloud-migration
+    .cloud-actions {
+    display: grid;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .now-checkin-page > section.cloud-migration button {
+    transition: none;
+  }
+}

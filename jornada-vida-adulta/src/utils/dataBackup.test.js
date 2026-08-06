@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   BACKUP_SCHEMA_VERSION,
   createBackupFileName,
   createBackupPayload,
+  downloadBackupPayload,
   parseBackupText,
   prepareBackupDataForRestore,
   validateBackupPayload,
@@ -133,5 +134,77 @@ describe('dataBackup', () => {
       isTimerRunning: false,
       lastTimerStartedAt: null,
     })
+  })
+
+  it('baixa exatamente o payload recebido e revoga a URL', () => {
+    const payload = createBackupPayload(backupData)
+    const click = vi.fn()
+    const remove = vi.fn()
+    const appendChild = vi.fn()
+    const createObjectURL = vi.fn(() => 'blob:backup')
+    const revokeObjectURL = vi.fn()
+    const blobs = []
+    class FakeBlob {
+      constructor(parts, options) {
+        this.parts = parts
+        this.type = options.type
+        blobs.push(this)
+      }
+    }
+    const link = { click, remove }
+
+    const fileName = downloadBackupPayload(payload, {
+      date: new Date(2026, 7, 5, 13, 45),
+      documentApi: {
+        createElement: () => link,
+        body: { appendChild },
+      },
+      urlApi: { createObjectURL, revokeObjectURL },
+      BlobApi: FakeBlob,
+    })
+
+    expect(fileName).toBe('jornada-backup-2026-08-05-1345.json')
+    expect(JSON.parse(blobs[0].parts[0])).toEqual(payload)
+    expect(blobs[0].parts[0]).toBe(JSON.stringify(payload, null, 2))
+    expect(blobs[0].type).toBe('application/json')
+    expect(click).toHaveBeenCalledTimes(1)
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:backup')
+  })
+
+  it('não baixa payload inválido', () => {
+    const createObjectURL = vi.fn()
+
+    expect(() =>
+      downloadBackupPayload(
+        { app: 'outro' },
+        { urlApi: { createObjectURL } },
+      ),
+    ).toThrow('invalid_backup_payload')
+    expect(createObjectURL).not.toHaveBeenCalled()
+  })
+
+  it('propaga falha ao iniciar o download e revoga a URL', () => {
+    const payload = createBackupPayload(backupData)
+    const revokeObjectURL = vi.fn()
+
+    expect(() =>
+      downloadBackupPayload(payload, {
+        documentApi: {
+          createElement: () => ({
+            click: () => {
+              throw new Error('private detail')
+            },
+            remove: vi.fn(),
+          }),
+          body: { appendChild: vi.fn() },
+        },
+        urlApi: {
+          createObjectURL: () => 'blob:backup',
+          revokeObjectURL,
+        },
+        BlobApi: class {},
+      }),
+    ).toThrow('backup_download_failed')
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:backup')
   })
 })

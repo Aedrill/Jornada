@@ -165,3 +165,51 @@ export function createBackupFileName(
 
   return `jornada-backup-${year}-${month}-${day}-${hours}${minutes}.json`
 }
+
+export function downloadBackupPayload(
+  payload,
+  {
+    date = new Date(),
+    documentApi = globalThis.document,
+    urlApi = globalThis.URL,
+    BlobApi = globalThis.Blob,
+  } = {},
+) {
+  const validation = validateBackupPayload(payload)
+
+  if (!validation.isValid) {
+    throw new Error('invalid_backup_payload')
+  }
+
+  if (
+    !documentApi?.createElement ||
+    !documentApi?.body?.appendChild ||
+    typeof urlApi?.createObjectURL !== 'function' ||
+    typeof urlApi?.revokeObjectURL !== 'function' ||
+    typeof BlobApi !== 'function'
+  ) {
+    throw new Error('backup_download_unavailable')
+  }
+
+  const fileName = createBackupFileName(date)
+  const fileBlob = new BlobApi(
+    [JSON.stringify(payload, null, 2)],
+    { type: 'application/json' },
+  )
+  const fileUrl = urlApi.createObjectURL(fileBlob)
+  const downloadLink = documentApi.createElement('a')
+
+  try {
+    downloadLink.href = fileUrl
+    downloadLink.download = fileName
+    documentApi.body.appendChild(downloadLink)
+    downloadLink.click()
+    downloadLink.remove()
+  } catch {
+    throw new Error('backup_download_failed')
+  } finally {
+    urlApi.revokeObjectURL(fileUrl)
+  }
+
+  return fileName
+}

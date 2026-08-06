@@ -1,4 +1,5 @@
 import AccountPanel from './AccountPanel'
+import CloudMigration from './CloudMigration'
 import DataBackup from './DataBackup'
 
 function DataProtectionPage({
@@ -21,6 +22,14 @@ function DataProtectionPage({
       </header>
 
       <AccountPanel />
+
+      <CloudMigration
+        captures={captures}
+        missions={missions}
+        activeFocusSession={activeFocusSession}
+        focusSessions={focusSessions}
+        dailyPlan={dailyPlan}
+      />
 
       <DataBackup
         captures={captures}
