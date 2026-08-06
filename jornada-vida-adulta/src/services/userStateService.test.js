@@ -172,6 +172,87 @@ describe('userStateService', () => {
     ).resolves.toMatchObject({ revision: 1, schemaVersion: 1 })
   })
 
+  it('aceita o mesmo snapshot com chaves em ordem diferente', async () => {
+    const reorderedSnapshot = {
+      data: {
+        dailyPlan: snapshot.data.dailyPlan,
+        focusSessions: snapshot.data.focusSessions,
+        activeFocusSession: snapshot.data.activeFocusSession,
+        missions: snapshot.data.missions,
+        captures: snapshot.data.captures,
+      },
+      exportedAt: snapshot.exportedAt,
+      schemaVersion: snapshot.schemaVersion,
+      app: snapshot.app,
+    }
+    createInsertQuery({
+      data: databaseRow({ state_data: reorderedSnapshot }),
+      error: null,
+    })
+
+    await expect(
+      createInitialUserState(userId, snapshot),
+    ).resolves.toMatchObject({ revision: 1 })
+  })
+
+  it('rejeita resposta com outro backup válido', async () => {
+    const otherSnapshot = createBackupPayload({
+      captures: [{ id: 'other-capture' }],
+      missions: [],
+      activeFocusSession: null,
+      focusSessions: [],
+      dailyPlan: { dateKey: '2026-08-05' },
+      exportedAt: snapshot.exportedAt,
+    })
+    createInsertQuery({
+      data: databaseRow({ state_data: otherSnapshot }),
+      error: null,
+    })
+
+    await expect(
+      createInitialUserState(userId, snapshot),
+    ).rejects.toMatchObject({ code: 'invalid_response' })
+  })
+
+  it('rejeita resposta com dado aninhado diferente', async () => {
+    const nestedSnapshot = createBackupPayload({
+      ...snapshot.data,
+      dailyPlan: {
+        ...snapshot.data.dailyPlan,
+        selection: { missionId: 'different-mission' },
+      },
+      exportedAt: snapshot.exportedAt,
+    })
+    createInsertQuery({
+      data: databaseRow({ state_data: nestedSnapshot }),
+      error: null,
+    })
+
+    await expect(
+      createInitialUserState(userId, snapshot),
+    ).rejects.toMatchObject({ code: 'invalid_response' })
+  })
+
+  it('não revela o conteúdo divergente no erro', async () => {
+    const privateValue = 'conteúdo privado divergente'
+    const otherSnapshot = createBackupPayload({
+      ...snapshot.data,
+      captures: [{ id: privateValue }],
+      exportedAt: snapshot.exportedAt,
+    })
+    createInsertQuery({
+      data: databaseRow({ state_data: otherSnapshot }),
+      error: null,
+    })
+
+    const error = await createInitialUserState(userId, snapshot).catch(
+      (caughtError) => caughtError,
+    )
+
+    expect(error.code).toBe('invalid_response')
+    expect(error.message).not.toContain(privateValue)
+  })
+
   it('rejeita resposta que não confirma revision 1', async () => {
     createInsertQuery({
       data: databaseRow({ revision: 2 }),

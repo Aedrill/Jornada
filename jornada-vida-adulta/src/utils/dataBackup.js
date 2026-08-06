@@ -34,6 +34,39 @@ function isPlainObject(value) {
   )
 }
 
+function isJsonCompatible(value, seen = new WeakSet()) {
+  if (
+    value === null ||
+    typeof value === 'string' ||
+    typeof value === 'boolean'
+  ) {
+    return true
+  }
+
+  if (typeof value === 'number') {
+    return Number.isFinite(value)
+  }
+
+  if (typeof value !== 'object' || seen.has(value)) {
+    return false
+  }
+
+  if (!Array.isArray(value) && !isPlainObject(value)) {
+    return false
+  }
+
+  seen.add(value)
+  const entries = Array.isArray(value)
+    ? value
+    : Object.values(value)
+  const isCompatible = entries.every((entry) =>
+    isJsonCompatible(entry, seen),
+  )
+  seen.delete(value)
+
+  return isCompatible
+}
+
 export function validateBackupPayload(payload) {
   if (!isPlainObject(payload)) {
     return {
@@ -96,6 +129,29 @@ export function validateBackupPayload(payload) {
   return {
     isValid: true,
     error: '',
+  }
+}
+
+export function createCanonicalBackupSnapshot(payload) {
+  if (!validateBackupPayload(payload).isValid) {
+    throw new Error('canonical_backup_failed')
+  }
+
+  try {
+    if (!isJsonCompatible(payload)) {
+      throw new Error('non_json_value')
+    }
+
+    const serializedPayload = JSON.stringify(payload)
+    const snapshot = JSON.parse(serializedPayload)
+
+    if (!validateBackupPayload(snapshot).isValid) {
+      throw new Error('invalid_canonical_backup')
+    }
+
+    return snapshot
+  } catch {
+    throw new Error('canonical_backup_failed')
   }
 }
 

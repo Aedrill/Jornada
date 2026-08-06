@@ -48,4 +48,33 @@ describe('DataBackup', () => {
     })
     expect(screen.getByRole('status')).toBeTruthy()
   })
+
+  it('mostra somente a mensagem mais recente da exportação', () => {
+    const props = {
+      captures: [],
+      missions: [],
+      activeFocusSession: null,
+      focusSessions: [],
+      dailyPlan: { dateKey: '2026-08-05' },
+      onRestore: vi.fn(),
+    }
+    downloadBackupPayload
+      .mockImplementationOnce(() => {
+        throw new Error('private detail')
+      })
+      .mockReturnValueOnce('jornada-backup.json')
+    render(<DataBackup {...props} />)
+    const exportButton = screen.getByRole('button', {
+      name: 'Baixar backup',
+    })
+
+    fireEvent.click(exportButton)
+    expect(screen.getByRole('alert')).toBeTruthy()
+
+    fireEvent.click(exportButton)
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(screen.getByRole('status').textContent).toContain(
+      'Backup criado',
+    )
+  })
 })

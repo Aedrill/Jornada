@@ -20,6 +20,9 @@ function DataBackup({
     useState(false)
 
   function handleExport() {
+    setStatusMessage('')
+    setErrorMessage('')
+
     const payload = createBackupPayload({
       captures,
       missions,

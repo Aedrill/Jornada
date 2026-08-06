@@ -3,6 +3,7 @@ import {
   BACKUP_SCHEMA_VERSION,
   createBackupFileName,
   createBackupPayload,
+  createCanonicalBackupSnapshot,
   downloadBackupPayload,
   parseBackupText,
   prepareBackupDataForRestore,
@@ -206,5 +207,77 @@ describe('dataBackup', () => {
       }),
     ).toThrow('backup_download_failed')
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:backup')
+  })
+
+  it('cria snapshot canônico profundamente independente', () => {
+    const payload = createBackupPayload({
+      ...backupData,
+      captures: [{ id: 'capture-1', detail: { text: 'original' } }],
+    })
+
+    const snapshot = createCanonicalBackupSnapshot(payload)
+
+    expect(snapshot).toEqual(payload)
+    expect(snapshot).not.toBe(payload)
+    expect(snapshot.data).not.toBe(payload.data)
+    expect(snapshot.data.captures).not.toBe(payload.data.captures)
+    expect(snapshot.data.captures[0].detail).not.toBe(
+      payload.data.captures[0].detail,
+    )
+  })
+
+  it('não altera o snapshot quando o payload original é mutado', () => {
+    const payload = createBackupPayload({
+      ...backupData,
+      dailyPlan: {
+        dateKey: '2026-08-05',
+        selection: { missionId: 'mission-1' },
+      },
+    })
+    const snapshot = createCanonicalBackupSnapshot(payload)
+
+    payload.data.dailyPlan.selection.missionId = 'mission-late'
+
+    expect(snapshot.data.dailyPlan.selection.missionId).toBe(
+      'mission-1',
+    )
+  })
+
+  it('rejeita payload inválido ao criar snapshot canônico', () => {
+    expect(() =>
+      createCanonicalBackupSnapshot({ app: 'outro' }),
+    ).toThrow('canonical_backup_failed')
+  })
+
+  it('rejeita valores não serializáveis', () => {
+    const payload = createBackupPayload({
+      ...backupData,
+      captures: [{ id: 'capture-1', calculate: () => 1 }],
+    })
+
+    expect(() => createCanonicalBackupSnapshot(payload)).toThrow(
+      'canonical_backup_failed',
+    )
+  })
+
+  it('rejeita referências circulares', () => {
+    const payload = createBackupPayload({
+      ...backupData,
+      dailyPlan: { ...backupData.dailyPlan },
+    })
+    payload.data.dailyPlan.circular = payload
+
+    expect(() => createCanonicalBackupSnapshot(payload)).toThrow(
+      'canonical_backup_failed',
+    )
+  })
+
+  it('mantém schema 1 no snapshot canônico', () => {
+    const snapshot = createCanonicalBackupSnapshot(
+      createBackupPayload(backupData),
+    )
+
+    expect(snapshot.schemaVersion).toBe(1)
+    expect(snapshot.schemaVersion).toBe(BACKUP_SCHEMA_VERSION)
   })
 })

@@ -13,7 +13,10 @@ import {
   createInitialUserState,
   getUserState,
 } from '../services/userStateService'
-import { downloadBackupPayload } from '../utils/dataBackup'
+import {
+  createCanonicalBackupSnapshot,
+  downloadBackupPayload,
+} from '../utils/dataBackup'
 import CloudMigration from './CloudMigration'
 
 vi.mock('../auth/AuthContext', () => ({
@@ -31,6 +34,9 @@ vi.mock('../utils/dataBackup', async (importOriginal) => {
   const original = await importOriginal()
   return {
     ...original,
+    createCanonicalBackupSnapshot: vi.fn((payload) =>
+      JSON.parse(JSON.stringify(payload)),
+    ),
     downloadBackupPayload: vi.fn(),
   }
 })
@@ -95,6 +101,10 @@ async function prepareConfirmation() {
 describe('CloudMigration', () => {
   beforeEach(() => {
     useAuth.mockReturnValue(connectedAuth())
+    createCanonicalBackupSnapshot.mockReset()
+    createCanonicalBackupSnapshot.mockImplementation((payload) =>
+      JSON.parse(JSON.stringify(payload)),
+    )
     downloadBackupPayload.mockClear()
     downloadBackupPayload.mockReturnValue(
       'jornada-backup-2026-08-05-1200.json',
@@ -267,20 +277,24 @@ describe('CloudMigration', () => {
     )
   })
 
-  it('mantém o snapshot da prévia após mudanças locais', async () => {
+  it('mantém independente o snapshot após mutação aninhada das props', async () => {
     createInitialUserState.mockImplementation(async (_id, snapshot) => ({
       ...existingRow,
       revision: 1,
       stateData: snapshot,
     }))
-    const { rerender } = render(<CloudMigration {...props} />)
+    const mutableProps = {
+      ...props,
+      captures: [
+        {
+          id: 'capture-1',
+          detail: { text: 'estado da prévia' },
+        },
+      ],
+    }
+    render(<CloudMigration {...mutableProps} />)
     await prepareConfirmation()
-    rerender(
-      <CloudMigration
-        {...props}
-        captures={[...props.captures, { id: 'capture-late' }]}
-      />,
-    )
+    mutableProps.captures[0].detail.text = 'mudança posterior'
     getUserState.mockResolvedValueOnce(null)
 
     fireEvent.click(
@@ -288,9 +302,36 @@ describe('CloudMigration', () => {
     )
     await screen.findByText('Cópia inicial guardada com segurança.')
 
-    expect(
-      createInitialUserState.mock.calls[0][1].data.captures,
-    ).toHaveLength(2)
+    const downloadedSnapshot = downloadBackupPayload.mock.calls[0][0]
+    const insertedSnapshot = createInitialUserState.mock.calls[0][1]
+
+    expect(downloadedSnapshot.data.captures[0].detail.text).toBe(
+      'estado da prévia',
+    )
+    expect(insertedSnapshot).toBe(downloadedSnapshot)
+  })
+
+  it('falha canônica não baixa nem acessa serviços remotos', async () => {
+    render(<CloudMigration {...props} />)
+    await verifyEmptyVault()
+    getUserState.mockClear()
+    createCanonicalBackupSnapshot.mockImplementation(() => {
+      throw new Error('private canonical detail')
+    })
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Preparar minha cópia inicial',
+      }),
+    )
+
+    const alert = await screen.findByRole('alert')
+    expect(alert.textContent).toContain('Não foi possível preparar')
+    expect(alert.textContent).not.toContain('private canonical detail')
+    expect(screen.queryByText('Prévia da cópia inicial')).toBeNull()
+    expect(downloadBackupPayload).not.toHaveBeenCalled()
+    expect(getUserState).not.toHaveBeenCalled()
+    expect(createInitialUserState).not.toHaveBeenCalled()
   })
 
   it('sucesso preserva as cinco chaves locais', async () => {

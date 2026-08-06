@@ -6,6 +6,7 @@ import {
   getUserStateErrorMessage,
 } from '../services/userStateService'
 import {
+  createCanonicalBackupSnapshot,
   createBackupPayload,
   downloadBackupPayload,
 } from '../utils/dataBackup'
@@ -164,20 +165,30 @@ function CloudMigrationContent({
   }
 
   function handlePrepareSnapshot() {
-    const snapshot = createBackupPayload({
-      captures,
-      missions,
-      activeFocusSession,
-      focusSessions,
-      dailyPlan,
-    })
-
-    setPendingSnapshot(snapshot)
+    setPendingSnapshot(null)
     setIsConfirming(false)
     setErrorMessage('')
-    setStatusMessage(
-      'Prévia preparada. Ela representa os dados deste momento.',
-    )
+    setStatusMessage('')
+
+    try {
+      const payload = createBackupPayload({
+        captures,
+        missions,
+        activeFocusSession,
+        focusSessions,
+        dailyPlan,
+      })
+      const snapshot = createCanonicalBackupSnapshot(payload)
+
+      setPendingSnapshot(snapshot)
+      setStatusMessage(
+        'Prévia preparada. Ela representa os dados deste momento.',
+      )
+    } catch {
+      setErrorMessage(
+        'Não foi possível preparar esta cópia. Tente novamente.',
+      )
+    }
   }
 
   async function handleConfirmUpload() {
